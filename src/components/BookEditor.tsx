@@ -105,12 +105,23 @@ function getTotalSpreads(totalPages: number): number {
   return 1 + Math.ceil((totalPages - 1) / 2);
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 export default function BookEditor({ book: initialBook, onBack }: BookEditorProps) {
   const [book, setBook] = useState<Book>(initialBook);
   const [bookView, setBookView] = useState<BookView>('cover');
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [currentSpreadIdx, setCurrentSpreadIdx] = useState(0);
   const [flipAnimation, setFlipAnimation] = useState('');
+  const isMobile = useIsMobile();
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -272,34 +283,68 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
 
   // Spread navigation with flip animation
   const goToNextSpread = useCallback(() => {
-    if (currentSpreadIdx >= totalSpreads - 1 || flipAnimation) return;
-    saveEditorContent();
-    setFlipAnimation('flip-forward');
-    setTimeout(() => {
-      const nextSpread = currentSpreadIdx + 1;
-      setCurrentSpreadIdx(nextSpread);
-      const [firstPage] = getSpreadPages(nextSpread, book.pages.length);
-      if (firstPage !== null) setCurrentPageIdx(firstPage);
-      setFlipAnimation('');
-    }, 700);
-  }, [currentSpreadIdx, totalSpreads, flipAnimation, saveEditorContent, book.pages.length]);
+    if (flipAnimation) return;
+
+    if (isMobile) {
+      // Mobile: single page navigation
+      if (currentPageIdx >= book.pages.length - 1) return;
+      saveEditorContent();
+      setFlipAnimation('flip-forward');
+      setTimeout(() => {
+        const nextIdx = currentPageIdx + 1;
+        setCurrentPageIdx(nextIdx);
+        setCurrentSpreadIdx(getSpreadForPage(nextIdx));
+        setFlipAnimation('');
+      }, 700);
+    } else {
+      // Desktop: spread navigation
+      if (currentSpreadIdx >= totalSpreads - 1) return;
+      saveEditorContent();
+      setFlipAnimation('flip-forward');
+      setTimeout(() => {
+        const nextSpread = currentSpreadIdx + 1;
+        setCurrentSpreadIdx(nextSpread);
+        const [firstPage] = getSpreadPages(nextSpread, book.pages.length);
+        if (firstPage !== null) setCurrentPageIdx(firstPage);
+        setFlipAnimation('');
+      }, 700);
+    }
+  }, [currentSpreadIdx, currentPageIdx, totalSpreads, flipAnimation, saveEditorContent, book.pages.length, isMobile]);
 
   const goToPrevSpread = useCallback(() => {
     if (flipAnimation) return;
-    if (currentSpreadIdx <= 0) {
-      setBookView('cover');
-      return;
+
+    if (isMobile) {
+      // Mobile: single page navigation
+      if (currentPageIdx <= 0) {
+        setBookView('cover');
+        return;
+      }
+      saveEditorContent();
+      setFlipAnimation('flip-backward');
+      setTimeout(() => {
+        const prevIdx = currentPageIdx - 1;
+        setCurrentPageIdx(prevIdx);
+        setCurrentSpreadIdx(getSpreadForPage(prevIdx));
+        setFlipAnimation('');
+      }, 700);
+    } else {
+      // Desktop: spread navigation
+      if (currentSpreadIdx <= 0) {
+        setBookView('cover');
+        return;
+      }
+      saveEditorContent();
+      setFlipAnimation('flip-backward');
+      setTimeout(() => {
+        const prevSpread = currentSpreadIdx - 1;
+        setCurrentSpreadIdx(prevSpread);
+        const [firstPage] = getSpreadPages(prevSpread, book.pages.length);
+        if (firstPage !== null) setCurrentPageIdx(firstPage);
+        setFlipAnimation('');
+      }, 700);
     }
-    saveEditorContent();
-    setFlipAnimation('flip-backward');
-    setTimeout(() => {
-      const prevSpread = currentSpreadIdx - 1;
-      setCurrentSpreadIdx(prevSpread);
-      const [firstPage] = getSpreadPages(prevSpread, book.pages.length);
-      if (firstPage !== null) setCurrentPageIdx(firstPage);
-      setFlipAnimation('');
-    }, 700);
-  }, [currentSpreadIdx, flipAnimation, saveEditorContent, book.pages.length]);
+  }, [currentSpreadIdx, currentPageIdx, flipAnimation, saveEditorContent, book.pages.length, isMobile]);
 
   if (!editor) return null;
 
@@ -308,6 +353,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
 
   // Build spread info text
   const spreadInfoText = (() => {
+    if (isMobile) {
+      return `עמוד ${currentPageIdx + 1} מתוך ${book.pages.length}`;
+    }
     if (currentSpreadIdx === 0) {
       return `עמוד 1 מתוך ${book.pages.length}`;
     }
@@ -592,53 +640,63 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className="editor-page-wrapper">
               {/* Spread navigation */}
               <div className="page-navigation">
-                <button className="page-nav-btn" onClick={goToPrevSpread} disabled={currentSpreadIdx === 0 && bookView === 'pages'}>
-                  {isRtl ? '→' : '←'} {currentSpreadIdx === 0 ? 'כריכה' : 'הקודם'}
+                <button className="page-nav-btn" onClick={goToPrevSpread} disabled={isMobile ? currentPageIdx === 0 : (currentSpreadIdx === 0 && bookView === 'pages')}>
+                  {isRtl ? '→' : '←'} {(isMobile ? currentPageIdx === 0 : currentSpreadIdx === 0) ? 'כריכה' : 'הקודם'}
                 </button>
                 <button className="page-nav-btn mobile-pages-toggle" onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}>
                   {mobileSidebarOpen ? '✕' : '☰'} עמודים
                 </button>
                 <span className="page-nav-info">{spreadInfoText}</span>
-                <button className="page-nav-btn" onClick={goToNextSpread} disabled={currentSpreadIdx >= totalSpreads - 1}>
+                <button className="page-nav-btn" onClick={goToNextSpread} disabled={isMobile ? currentPageIdx >= book.pages.length - 1 : currentSpreadIdx >= totalSpreads - 1}>
                   הבא {isRtl ? '←' : '→'}
                 </button>
               </div>
 
               {/* The open book */}
               <div className="book-spread">
-                <div className={`book-open ${isRtl ? 'book-rtl' : 'book-ltr'} ${currentSpreadIdx === 0 ? 'single-page' : ''} ${flipAnimation}`}>
-                  
-                  {/* First page of spread (right for RTL) */}
-                  {spreadFirstPage !== null && (
-                    <div
-                      className={`spread-page spread-page-first ${currentPageIdx === spreadFirstPage ? 'page-active' : 'page-preview'} ${currentSpreadIdx === 0 ? 'page-single' : ''}`}
-                      onClick={() => activatePage(spreadFirstPage)}
-                    >
-                      {renderPageContent(spreadFirstPage, currentPageIdx === spreadFirstPage)}
+                {isMobile ? (
+                  /* Mobile: single page view */
+                  <div className={`book-open ${isRtl ? 'book-rtl' : 'book-ltr'} single-page ${flipAnimation}`}>
+                    <div className="spread-page spread-page-first page-single page-active">
+                      {renderPageContent(currentPageIdx, true)}
                     </div>
-                  )}
+                  </div>
+                ) : (
+                  /* Desktop: spread view */
+                  <div className={`book-open ${isRtl ? 'book-rtl' : 'book-ltr'} ${currentSpreadIdx === 0 ? 'single-page' : ''} ${flipAnimation}`}>
 
-                  {/* Center gutter / binding (only for two-page spreads) */}
-                  {currentSpreadIdx > 0 && <div className="book-gutter" />}
+                    {/* First page of spread (right for RTL) */}
+                    {spreadFirstPage !== null && (
+                      <div
+                        className={`spread-page spread-page-first ${currentPageIdx === spreadFirstPage ? 'page-active' : 'page-preview'} ${currentSpreadIdx === 0 ? 'page-single' : ''}`}
+                        onClick={() => activatePage(spreadFirstPage)}
+                      >
+                        {renderPageContent(spreadFirstPage, currentPageIdx === spreadFirstPage)}
+                      </div>
+                    )}
 
-                  {/* Second page of spread (left for RTL) */}
-                  {currentSpreadIdx > 0 && (
-                    <div
-                      className={`spread-page spread-page-second ${spreadSecondPage !== null && currentPageIdx === spreadSecondPage ? 'page-active' : 'page-preview'} ${spreadSecondPage === null ? 'page-empty' : ''}`}
-                      onClick={() => spreadSecondPage !== null && activatePage(spreadSecondPage)}
-                    >
-                      {spreadSecondPage !== null ? (
-                        renderPageContent(spreadSecondPage, currentPageIdx === spreadSecondPage)
-                      ) : (
-                        <div className="page-inner empty-page-inner">
-                          <button className="btn-add-page-spread" onClick={addPage}>
-                            + הוסף עמוד
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {/* Center gutter / binding (only for two-page spreads) */}
+                    {currentSpreadIdx > 0 && <div className="book-gutter" />}
+
+                    {/* Second page of spread (left for RTL) */}
+                    {currentSpreadIdx > 0 && (
+                      <div
+                        className={`spread-page spread-page-second ${spreadSecondPage !== null && currentPageIdx === spreadSecondPage ? 'page-active' : 'page-preview'} ${spreadSecondPage === null ? 'page-empty' : ''}`}
+                        onClick={() => spreadSecondPage !== null && activatePage(spreadSecondPage)}
+                      >
+                        {spreadSecondPage !== null ? (
+                          renderPageContent(spreadSecondPage, currentPageIdx === spreadSecondPage)
+                        ) : (
+                          <div className="page-inner empty-page-inner">
+                            <button className="btn-add-page-spread" onClick={addPage}>
+                              + הוסף עמוד
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="page-add-area">

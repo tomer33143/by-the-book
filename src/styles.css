@@ -2444,26 +2444,10 @@ body {
     min-height: auto;
   }
 
-  .spread-page-second {
-    display: none;
-  }
-
-  .book-gutter {
-    display: none;
-  }
-
-  .spread-page-first {
-    border-radius: 4px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  }
-
-  .book-rtl .spread-page-first {
-    border-radius: 4px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  }
-
   .spread-page.page-single {
     max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
   .page-inner {
