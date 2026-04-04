@@ -1052,6 +1052,125 @@ body {
   background: #fef2f2;
 }
 
+/* ===== Page Management Mode ===== */
+.sidebar-header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-manage-pages {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid var(--text-lighter);
+  background: none;
+  color: var(--text-lighter);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-manage-pages:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-manage-pages.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.swap-hint {
+  padding: 6px 12px;
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--primary);
+  font-size: 11px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.page-thumb-wrapper {
+  margin-bottom: 4px;
+}
+
+.page-thumb.manage-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--border-light);
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.page-thumb.manage-mode.active {
+  background: rgba(108, 92, 231, 0.1);
+  border-color: var(--primary);
+}
+
+.page-thumb.manage-mode.swap-source {
+  border-color: var(--accent);
+  background: rgba(212, 165, 116, 0.1);
+}
+
+.page-manage-actions {
+  display: flex;
+  gap: 3px;
+  margin-right: auto;
+}
+
+.ltr .page-manage-actions {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.page-manage-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: var(--text-light);
+}
+
+.page-manage-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(108, 92, 231, 0.05);
+}
+
+.page-manage-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.page-manage-btn.swap-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.page-manage-btn.insert-btn:hover:not(:disabled) {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.05);
+}
+
 /* ===== Editor Page ===== */
 .editor-page-wrapper {
   flex: 1;
@@ -1091,7 +1210,7 @@ body {
 /* ===== TipTap Editor Styles ===== */
 .book-page-editor {
   outline: none;
-  min-height: 900px;
+  min-height: 500px;
   font-size: 16px;
   line-height: 1.8;
   color: var(--text);
@@ -1181,7 +1300,7 @@ body {
 /* ProseMirror specific */
 .ProseMirror {
   outline: none;
-  min-height: 900px;
+  min-height: 500px;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -1705,7 +1824,7 @@ body {
   position: relative;
   max-width: 1200px;
   width: 100%;
-  min-height: 700px;
+  height: 700px;
   transform-style: preserve-3d;
   transition: transform 0.15s ease;
 }
@@ -1718,11 +1837,12 @@ body {
 /* ===== Spread Pages ===== */
 .spread-page {
   flex: 1;
-  min-height: 700px;
+  height: 700px;
   background: white;
   position: relative;
   cursor: pointer;
   transition: box-shadow 0.2s;
+  overflow: hidden;
 }
 
 .spread-page.page-active {
@@ -1809,10 +1929,11 @@ body {
 /* ===== Page Inner Content ===== */
 .page-inner {
   padding: 48px 44px;
-  min-height: 700px;
+  height: 700px;
   display: flex;
   flex-direction: column;
   direction: rtl;
+  overflow-y: auto;
 }
 
 .ltr .page-inner {
@@ -1854,8 +1975,8 @@ body {
 /* ===== Page Content Preview ===== */
 .page-content-preview {
   flex: 1;
-  min-height: 500px;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .page-content-preview p {
@@ -2184,23 +2305,20 @@ body {
 @media (max-width: 1024px) {
   .book-open {
     max-width: 100%;
+    height: 600px;
   }
 
   .spread-page {
-    min-height: 500px;
-  }
-
-  .book-open {
-    min-height: 500px;
+    height: 600px;
   }
 
   .page-inner {
     padding: 32px 28px;
-    min-height: 500px;
+    height: 600px;
   }
 
   .ProseMirror {
-    min-height: 400px;
+    min-height: 350px;
   }
 
   .page-sidebar {
@@ -2432,7 +2550,7 @@ body {
 
   .book-open {
     flex-direction: column;
-    min-height: auto;
+    height: 500px;
     max-width: 100%;
   }
 
@@ -2441,7 +2559,7 @@ body {
   }
 
   .spread-page {
-    min-height: auto;
+    height: 500px;
   }
 
   .spread-page.page-single {
@@ -2452,7 +2570,7 @@ body {
 
   .page-inner {
     padding: 20px 16px;
-    min-height: auto;
+    height: 500px;
   }
 
   .ProseMirror {
@@ -2474,7 +2592,7 @@ body {
   }
 
   .page-content-preview {
-    min-height: 200px;
+    overflow: hidden;
   }
 
   .page-add-area {

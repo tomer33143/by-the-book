@@ -129,6 +129,8 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [showFontPicker, setShowFontPicker] = useState(false);
   const [showSizePicker, setShowSizePicker] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [pageManageMode, setPageManageMode] = useState(false);
+  const [swapSource, setSwapSource] = useState<number | null>(null);
 
   const isRtl = book.language === 'he';
   const fonts = isRtl ? FONTS_HE : FONTS_EN;
@@ -238,6 +240,53 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     setCurrentPageIdx(newPageIdx);
     setCurrentSpreadIdx(getSpreadForPage(newPageIdx));
   }, [currentPageIdx, book.pages.length]);
+
+  // Swap two pages
+  const swapPages = useCallback((idxA: number, idxB: number) => {
+    if (idxA === idxB) return;
+    saveEditorContent();
+    setBook(prev => {
+      const pages = [...prev.pages];
+      [pages[idxA], pages[idxB]] = [pages[idxB], pages[idxA]];
+      return { ...prev, pages: pages.map((p, i) => ({ ...p, pageNumber: i + 1 })) };
+    });
+    setCurrentPageIdx(idxB);
+    setCurrentSpreadIdx(getSpreadForPage(idxB));
+    setSwapSource(null);
+  }, [saveEditorContent]);
+
+  // Move page to a specific position
+  const movePage = useCallback((fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    saveEditorContent();
+    setBook(prev => {
+      const pages = [...prev.pages];
+      const [moved] = pages.splice(fromIdx, 1);
+      pages.splice(toIdx, 0, moved);
+      return { ...prev, pages: pages.map((p, i) => ({ ...p, pageNumber: i + 1 })) };
+    });
+    setCurrentPageIdx(toIdx);
+    setCurrentSpreadIdx(getSpreadForPage(toIdx));
+  }, [saveEditorContent]);
+
+  // Insert new page at a specific position (after the given index)
+  const insertPageAfter = useCallback((afterIdx: number) => {
+    saveEditorContent();
+    const insertAt = afterIdx + 1;
+    setBook(prev => {
+      const pages = [...prev.pages];
+      pages.splice(insertAt, 0, {
+        id: `page_${Date.now()}`,
+        content: '',
+        pageNumber: 0,
+      });
+      return { ...prev, pages: pages.map((p, i) => ({ ...p, pageNumber: i + 1 })) };
+    });
+    setTimeout(() => {
+      setCurrentPageIdx(insertAt);
+      setCurrentSpreadIdx(getSpreadForPage(insertAt));
+    }, 0);
+  }, [saveEditorContent]);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -607,29 +656,80 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className={`page-sidebar ${isRtl ? 'sidebar-right' : 'sidebar-left'} ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
               <div className="sidebar-header">
                 <span>עמודים</span>
-                <button className="btn-add-page" onClick={addPage} title="הוסף עמוד">+</button>
+                <div className="sidebar-header-actions">
+                  <button
+                    className={`btn-manage-pages ${pageManageMode ? 'active' : ''}`}
+                    onClick={() => { setPageManageMode(!pageManageMode); setSwapSource(null); }}
+                    title="סידור עמודים"
+                  >
+                    ⇅
+                  </button>
+                  <button className="btn-add-page" onClick={addPage} title="הוסף עמוד">+</button>
+                </div>
               </div>
+              {pageManageMode && swapSource !== null && (
+                <div className="swap-hint">בחר עמוד יעד להחלפה עם עמוד {swapSource + 1}</div>
+              )}
               <div className="page-list">
                 {/* Cover thumb */}
-                <button
-                  className="page-thumb cover-thumb"
-                  onClick={() => setBookView('cover')}
-                >
-                  <BookCoverPreview cover={book.cover} title={book.title} author={book.author} isRtl={isRtl} small />
-                  <span className="page-thumb-label">כריכה</span>
-                </button>
-                {book.pages.map((page, idx) => (
+                {!pageManageMode && (
                   <button
-                    key={page.id}
-                    className={`page-thumb ${idx === currentPageIdx ? 'active' : ''}`}
-                    onClick={() => switchPage(idx)}
+                    className="page-thumb cover-thumb"
+                    onClick={() => setBookView('cover')}
                   >
-                    <span className="page-thumb-number">{page.pageNumber}</span>
-                    <div className="page-thumb-preview" dangerouslySetInnerHTML={{ __html: page.content ? page.content.slice(0, 100) : '' }} />
+                    <BookCoverPreview cover={book.cover} title={book.title} author={book.author} isRtl={isRtl} small />
+                    <span className="page-thumb-label">כריכה</span>
                   </button>
+                )}
+                {book.pages.map((page, idx) => (
+                  <div key={page.id} className="page-thumb-wrapper">
+                    {pageManageMode ? (
+                      <div className={`page-thumb manage-mode ${swapSource === idx ? 'swap-source' : ''} ${idx === currentPageIdx ? 'active' : ''}`}>
+                        <span className="page-thumb-number">{page.pageNumber}</span>
+                        <div className="page-manage-actions">
+                          <button
+                            className="page-manage-btn"
+                            onClick={() => movePage(idx, Math.max(0, idx - 1))}
+                            disabled={idx === 0}
+                            title="הזז למעלה"
+                          >▲</button>
+                          <button
+                            className="page-manage-btn"
+                            onClick={() => movePage(idx, Math.min(book.pages.length - 1, idx + 1))}
+                            disabled={idx === book.pages.length - 1}
+                            title="הזז למטה"
+                          >▼</button>
+                          <button
+                            className={`page-manage-btn swap-btn ${swapSource === idx ? 'active' : ''}`}
+                            onClick={() => {
+                              if (swapSource === null || swapSource === idx) {
+                                setSwapSource(swapSource === idx ? null : idx);
+                              } else {
+                                swapPages(swapSource, idx);
+                              }
+                            }}
+                            title={swapSource !== null && swapSource !== idx ? `החלף עם עמוד ${swapSource + 1}` : 'בחר להחלפה'}
+                          >⇄</button>
+                          <button
+                            className="page-manage-btn insert-btn"
+                            onClick={() => insertPageAfter(idx)}
+                            title="הוסף עמוד אחרי"
+                          >+</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className={`page-thumb ${idx === currentPageIdx ? 'active' : ''}`}
+                        onClick={() => switchPage(idx)}
+                      >
+                        <span className="page-thumb-number">{page.pageNumber}</span>
+                        <div className="page-thumb-preview" dangerouslySetInnerHTML={{ __html: page.content ? page.content.slice(0, 100) : '' }} />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
-              {book.pages.length > 1 && (
+              {!pageManageMode && book.pages.length > 1 && (
                 <button className="btn-delete-page" onClick={deletePage} title="מחק עמוד נוכחי">
                   🗑️ מחק עמוד
                 </button>
