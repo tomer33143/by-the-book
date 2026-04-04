@@ -1,0 +1,295 @@
+/* Premium UI/UX Overhaul Overrides */
+
+/* Globals */
+:root {
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 64px rgba(108, 92, 231, 0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+}
+
+::selection {
+  background: rgba(108, 92, 231, 0.3);
+  color: #1a1a2e;
+}
+
+/* Auth / Login */
+.auth-container {
+  background: linear-gradient(135deg, #161528 0%, #1c2340 50%, #0a1f44 100%);
+  animation: bg-shift 15s ease infinite alternate;
+}
+
+@keyframes bg-shift {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(15deg); }
+}
+
+.auth-card {
+  background: rgba(255, 255, 255, 0.05); /* Fully transparent glass */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2), 0 0 40px rgba(108, 92, 231, 0.1) inset;
+}
+
+.auth-logo h1 { color: #ffffff; }
+.auth-form h2 { color: #f0f0f0; }
+.auth-subtitle { color: rgba(255, 255, 255, 0.7); }
+.input-group label { color: rgba(255, 255, 255, 0.9); }
+
+.auth-card .input-group input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.auth-card .input-group input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 4px rgba(162, 155, 254, 0.2);
+}
+
+.auth-card .input-group input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Modals */
+.modal {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-xl);
+  border-radius: var(--radius-lg);
+  transform: translateY(20px) scale(0.95);
+  animation: modal-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modal-enter {
+  to { transform: translateY(0) scale(1); }
+}
+
+/* Micro animations & Buttons */
+button {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-btn, .btn-primary, .btn-new-book {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.2);
+}
+
+.auth-btn:hover, .btn-primary:hover, .btn-new-book:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.3);
+}
+
+.auth-btn:active, .btn-primary:active, .btn-new-book:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Dashboard Hover Effects & 3D Cards */
+.book-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: white;
+  overflow: visible;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.book-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-light);
+}
+
+/* Floating Pill-shaped Toolbar */
+.editor-topbar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  margin: 16px auto;
+  border-radius: 40px;
+  max-width: 95%;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  padding: 8px 24px;
+  animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toolbar {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+  margin-top: 12px;
+  padding: 8px;
+}
+
+.toolbar-btn {
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.95);
+}
+
+/* Fix Editor Topbar Colors */
+.editor-view-tabs {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.view-tab {
+  color: var(--text-light) !important;
+  font-weight: 600;
+}
+
+.view-tab:hover {
+  color: var(--primary) !important;
+  background: rgba(108, 92, 231, 0.1) !important;
+}
+
+.view-tab.active {
+  color: white !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3) !important;
+}
+
+.cover-color-swatch {
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+.cover-color-custom {
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Enhanced Page Flip UI */
+.book-spread {
+  perspective: 2000px;
+}
+
+.spread-page {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.spread-page {
+  box-shadow: -20px 0 40px rgba(0, 0, 0, 0.05), inset 0 0 40px rgba(0, 0, 0, 0.02);
+  background: #fdfaf6; /* Subtle paper texture color */
+}
+
+.spread-page::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.spread-page-first::before {
+  right: 0;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.06));
+}
+
+.spread-page-second::before {
+  left: 0;
+  background: linear-gradient(to left, transparent, rgba(0,0,0,0.06));
+}
+
+.book-gutter {
+  background: linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.1) 100%);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2) inset;
+}
+
+/* Empty States */
+.empty-state {
+  background: linear-gradient(to bottom, transparent, rgba(108, 92, 231, 0.02));
+  border-radius: var(--radius-lg);
+  padding: 64px;
+}
+
+.empty-icon {
+  font-size: 72px;
+  filter: drop-shadow(0 10px 20px rgba(108, 92, 231, 0.2));
+  animation: hover-bounce 3s infinite ease-in-out;
+}
+
+@keyframes hover-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 92, 231, 0.6);
+}
+
+/* Dashboard Cover Presentation */
+.book-card-cover-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-light), var(--border-light));
+  border-radius: var(--radius-sm);
+  padding: 24px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.book-card-cover-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.4) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.book-pages-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
