@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Book } from '../types';
-import { getBooks, createNewBook, deleteBook } from '../utils/storage';
+import { getBooks, createNewBook, saveBook, deleteBook } from '../utils/storage';
 import { BookCoverPreview } from './CoverEditor';
 
 interface DashboardProps {
@@ -10,25 +10,34 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ username, onLogout, onOpenBook }: DashboardProps) {
-  const [books, setBooks] = useState<Book[]>(() => getBooks(username));
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showNewBook, setShowNewBook] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newAuthor, setNewAuthor] = useState('');
   const [newLanguage, setNewLanguage] = useState<'he' | 'en'>('he');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  function handleCreateBook(e: React.FormEvent) {
+  useEffect(() => {
+    getBooks(username).then(books => {
+      setBooks(books);
+      setLoading(false);
+    });
+  }, [username]);
+
+  async function handleCreateBook(e: React.FormEvent) {
     e.preventDefault();
     if (!newTitle.trim()) return;
     const book = createNewBook(username, newTitle.trim(), newAuthor.trim() || username, newLanguage);
+    await saveBook(book);
     setBooks(prev => [book, ...prev]);
     setShowNewBook(false);
     setNewTitle('');
     setNewAuthor('');
   }
 
-  function handleDeleteBook(bookId: string) {
-    deleteBook(bookId);
+  async function handleDeleteBook(bookId: string) {
+    await deleteBook(bookId);
     setBooks(prev => prev.filter(b => b.id !== bookId));
     setDeleteConfirm(null);
   }
@@ -132,7 +141,12 @@ export default function Dashboard({ username, onLogout, onOpenBook }: DashboardP
           </div>
         )}
 
-        {books.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">
+            <div className="empty-icon">⏳</div>
+            <h3>טוען ספרים...</h3>
+          </div>
+        ) : books.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📚</div>
             <h3>אין ספרים עדיין</h3>

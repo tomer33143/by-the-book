@@ -13,28 +13,38 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    if (isRegister) {
-      if (password !== confirmPassword) {
-        setError('הסיסמאות אינן תואמות');
-        return;
-      }
-      const result = register(username, password);
-      if (result.success) {
-        onLogin(username);
+    try {
+      if (isRegister) {
+        if (password !== confirmPassword) {
+          setError('הסיסמאות אינן תואמות');
+          setLoading(false);
+          return;
+        }
+        const result = await register(username, password);
+        if (result.success) {
+          onLogin(username);
+        } else {
+          setError(result.error || 'שגיאה בהרשמה');
+        }
       } else {
-        setError(result.error || 'שגיאה בהרשמה');
+        const result = await login(username, password);
+        if (result.success) {
+          onLogin(username);
+        } else {
+          setError(result.error || 'שגיאה בהתחברות');
+        }
       }
-    } else {
-      const result = login(username, password);
-      if (result.success) {
-        onLogin(username);
-      } else {
-        setError(result.error || 'שגיאה בהתחברות');
-      }
+    } catch {
+      setError('שגיאת חיבור לשרת');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -115,8 +125,8 @@ export default function AuthScreen({ onLogin }: AuthScreenProps) {
 
           {error && <div className="auth-error">{error}</div>}
 
-          <button type="submit" className="auth-btn">
-            {isRegister ? 'הרשמה' : 'התחברות'}
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? '⏳ מתחבר...' : (isRegister ? 'הרשמה' : 'התחברות')}
           </button>
 
           <button

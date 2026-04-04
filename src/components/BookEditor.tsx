@@ -227,16 +227,16 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     setCurrentSpreadIdx(getSpreadForPage(newPageIdx));
   }, [currentPageIdx, book.pages.length]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
     if (editor) {
       const html = editor.getHTML();
       const updatedBook = { ...book, pages: [...book.pages] };
       updatedBook.pages[currentPageIdx] = { ...updatedBook.pages[currentPageIdx], content: html };
-      saveBook(updatedBook);
+      await saveBook(updatedBook);
       setBook(updatedBook);
     } else {
-      saveBook(book);
+      await saveBook(book);
     }
     setTimeout(() => setSaving(false), 800);
   }, [book, editor, currentPageIdx]);

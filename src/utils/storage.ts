@@ -1,7 +1,6 @@
-import { User, Book, BookCover, NoteFolder } from '../types';
+import { Book, BookCover, NoteFolder } from '../types';
+import { supabase } from './supabase';
 
-const USERS_KEY = 'btb_users';
-const BOOKS_KEY = 'btb_books';
 const SESSION_KEY = 'btb_session';
 
 function hashPassword(password: string): string {
@@ -14,35 +13,41 @@ function hashPassword(password: string): string {
   return 'h_' + Math.abs(hash).toString(36) + '_' + password.length;
 }
 
-function getUsers(): User[] {
-  const data = localStorage.getItem(USERS_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-function saveUsers(users: User[]): void {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-export function register(username: string, password: string): { success: boolean; error?: string } {
+export async function register(username: string, password: string): Promise<{ success: boolean; error?: string }> {
   if (username.length < 2) return { success: false, error: 'שם משתמש חייב להכיל לפחות 2 תווים' };
   if (password.length < 4) return { success: false, error: 'סיסמה חייבת להכיל לפחות 4 תווים' };
 
-  const users = getUsers();
-  if (users.find(u => u.username === username)) {
+  const { data: existing } = await supabase
+    .from('users')
+    .select('username')
+    .eq('username', username)
+    .single();
+
+  if (existing) {
     return { success: false, error: 'שם משתמש כבר קיים' };
   }
 
-  users.push({ username, passwordHash: hashPassword(password) });
-  saveUsers(users);
+  const { error } = await supabase
+    .from('users')
+    .insert({ username, password_hash: hashPassword(password) });
+
+  if (error) {
+    return { success: false, error: 'שגיאה בהרשמה' };
+  }
+
   localStorage.setItem(SESSION_KEY, username);
   return { success: true };
 }
 
-export function login(username: string, password: string): { success: boolean; error?: string } {
-  const users = getUsers();
-  const user = users.find(u => u.username === username);
+export async function login(username: string, password: string): Promise<{ success: boolean; error?: string }> {
+  const { data: user } = await supabase
+    .from('users')
+    .select('username, password_hash')
+    .eq('username', username)
+    .single();
+
   if (!user) return { success: false, error: 'שם משתמש לא נמצא' };
-  if (user.passwordHash !== hashPassword(password)) return { success: false, error: 'סיסמה שגויה' };
+  if (user.password_hash !== hashPassword(password)) return { success: false, error: 'סיסמה שגויה' };
 
   localStorage.setItem(SESSION_KEY, username);
   return { success: true };
@@ -56,18 +61,29 @@ export function getCurrentUser(): string | null {
   return localStorage.getItem(SESSION_KEY);
 }
 
-export function getBooks(owner: string): Book[] {
-  const data = localStorage.getItem(BOOKS_KEY);
-  const allBooks: Book[] = data ? JSON.parse(data) : [];
-  return allBooks.filter(b => b.owner === owner).map(migrateBook);
+export async function getBooks(owner: string): Promise<Book[]> {
+  const { data, error } = await supabase
+    .from('books')
+    .select('*')
+    .eq('owner', owner)
+    .order('updated_at', { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map(row => migrateBook({
+    id: row.id,
+    owner: row.owner,
+    title: row.title,
+    author: row.author,
+    language: row.language as 'he' | 'en',
+    cover: row.cover as BookCover,
+    pages: row.pages as Book['pages'],
+    noteFolders: row.note_folders as NoteFolder[],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
 }
 
-function getAllBooks(): Book[] {
-  const data = localStorage.getItem(BOOKS_KEY);
-  return data ? JSON.parse(data) : [];
-}
-
-// Migrate old books that don't have noteFolders
 function migrateBook(book: Book): Book {
   if (!book.noteFolders) {
     book.noteFolders = [...DEFAULT_NOTE_FOLDERS];
@@ -75,21 +91,38 @@ function migrateBook(book: Book): Book {
   return book;
 }
 
-export function saveBook(book: Book): void {
-  const allBooks = getAllBooks();
-  const idx = allBooks.findIndex(b => b.id === book.id);
+export async function saveBook(book: Book): Promise<void> {
   book.updatedAt = Date.now();
-  if (idx >= 0) {
-    allBooks[idx] = book;
-  } else {
-    allBooks.push(book);
+
+  const { error } = await supabase
+    .from('books')
+    .upsert({
+      id: book.id,
+      owner: book.owner,
+      title: book.title,
+      author: book.author,
+      language: book.language,
+      cover: book.cover,
+      pages: book.pages,
+      note_folders: book.noteFolders,
+      created_at: book.createdAt,
+      updated_at: book.updatedAt,
+    });
+
+  if (error) {
+    console.error('Failed to save book:', error);
   }
-  localStorage.setItem(BOOKS_KEY, JSON.stringify(allBooks));
 }
 
-export function deleteBook(bookId: string): void {
-  const allBooks = getAllBooks().filter(b => b.id !== bookId);
-  localStorage.setItem(BOOKS_KEY, JSON.stringify(allBooks));
+export async function deleteBook(bookId: string): Promise<void> {
+  const { error } = await supabase
+    .from('books')
+    .delete()
+    .eq('id', bookId);
+
+  if (error) {
+    console.error('Failed to delete book:', error);
+  }
 }
 
 export const DEFAULT_COVER: BookCover = {
@@ -134,6 +167,6 @@ export function createNewBook(owner: string, title: string, author: string, lang
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  saveBook(book);
+  // Save is now async, caller should await saveBook(book)
   return book;
 }
