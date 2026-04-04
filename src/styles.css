@@ -2180,36 +2180,464 @@ body {
 }
 
 /* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .auth-card {
-    margin: 16px;
-    padding: 32px 24px;
+/* ===== Tablet ===== */
+@media (max-width: 1024px) {
+  .book-open {
+    max-width: 100%;
   }
 
+  .spread-page {
+    min-height: 500px;
+  }
+
+  .book-open {
+    min-height: 500px;
+  }
+
+  .page-inner {
+    padding: 32px 28px;
+    min-height: 500px;
+  }
+
+  .ProseMirror {
+    min-height: 400px;
+  }
+
+  .page-sidebar {
+    width: 140px;
+  }
+
+  .editor-page-wrapper {
+    padding: 16px;
+  }
+}
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  /* Auth */
+  .auth-card {
+    margin: 16px;
+    padding: 28px 20px;
+    max-width: 100%;
+  }
+
+  .auth-logo-icon {
+    font-size: 48px;
+  }
+
+  .auth-logo h1 {
+    font-size: 28px;
+  }
+
+  /* Dashboard */
   .dashboard-header {
     padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 20px;
   }
 
   .dashboard-main {
     padding: 16px;
   }
 
+  .dashboard-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   .books-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .book-card {
+    padding: 10px;
+  }
+
+  /* Editor Topbar */
+  .editor-topbar {
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .editor-topbar-section {
+    gap: 6px;
+  }
+
+  .editor-book-title {
+    display: none;
+  }
+
+  .btn-back {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .btn-save, .btn-export {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .editor-view-tabs {
+    order: 10;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+
+  /* Editor Toolbar */
+  .editor-toolbar {
+    padding: 4px 8px;
+    gap: 1px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+
+  .editor-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbar-group {
+    flex-shrink: 0;
+  }
+
+  .toolbar-btn {
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  .toolbar-divider {
+    margin: 0 2px;
+  }
+
+  .toolbar-dropdown-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .toolbar-dropdown {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* Editor Body - hide sidebar on mobile, show single page */
+  .editor-body {
+    flex-direction: column;
   }
 
   .page-sidebar {
-    width: 120px;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    border: none;
+    transition: max-height 0.3s ease;
+    order: 2;
   }
 
-  .editor-page {
-    padding: 40px 30px;
+  .page-sidebar.sidebar-right,
+  .page-sidebar.sidebar-left {
+    border: none;
+    order: 2;
+  }
+
+  .page-sidebar.mobile-open {
+    max-height: 200px;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .page-sidebar .page-list {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    padding: 8px;
+    scrollbar-width: none;
+  }
+
+  .page-sidebar .page-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .page-sidebar .page-thumb {
+    min-width: 60px;
+    max-width: 60px;
+    padding: 6px 8px;
+    margin-bottom: 0;
+    text-align: center;
+  }
+
+  .page-thumb-preview {
+    display: none;
+  }
+
+  .page-sidebar .cover-thumb {
+    min-width: 60px;
+    max-width: 60px;
+  }
+
+  .page-sidebar .cover-thumb .cover-preview-small {
+    width: 40px;
+    height: 50px;
+  }
+
+  .page-sidebar .sidebar-header {
+    padding: 8px 12px;
+  }
+
+  .btn-delete-page {
+    padding: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* Editor Page Area */
+  .editor-page-wrapper {
+    padding: 8px;
+    order: 1;
+  }
+
+  .page-navigation {
+    padding: 6px 0;
+    gap: 8px;
+  }
+
+  .page-nav-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .page-nav-info {
+    font-size: 12px;
+  }
+
+  /* Book spread - single page on mobile */
+  .book-spread {
+    perspective: 1200px;
+  }
+
+  .book-open {
+    flex-direction: column;
+    min-height: auto;
+    max-width: 100%;
+  }
+
+  .book-open.single-page {
+    max-width: 100%;
+  }
+
+  .spread-page {
     min-height: auto;
   }
 
-  .editor-toolbar {
-    padding: 4px 8px;
+  .spread-page-second {
+    display: none;
+  }
+
+  .book-gutter {
+    display: none;
+  }
+
+  .spread-page-first {
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .book-rtl .spread-page-first {
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .spread-page.page-single {
+    max-width: 100%;
+  }
+
+  .page-inner {
+    padding: 20px 16px;
+    min-height: auto;
+  }
+
+  .ProseMirror {
+    min-height: 300px;
+  }
+
+  .page-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .page-header-title {
+    font-size: 10px;
+  }
+
+  .page-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+  }
+
+  .page-content-preview {
+    min-height: 200px;
+  }
+
+  .page-add-area {
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .btn-add-page-bottom {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+
+  /* Cover Editor */
+  .book-view-cover {
+    padding: 16px;
+  }
+
+  .cover-editor-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cover-preview-area {
+    min-height: 300px;
+  }
+
+  .cover-controls {
+    width: 100%;
+    max-height: none;
+  }
+
+  .btn-open-book {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  /* Notes Panel */
+  .notes-panel {
+    flex-direction: column;
+    height: calc(100vh - 110px);
+  }
+
+  .notes-sidebar {
+    width: 100%;
+    max-height: 180px;
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ltr .notes-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .notes-main {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .note-editor-area {
+    padding: 12px;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    padding: 16px;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .modal h3 {
+    font-size: 18px;
+  }
+
+  .language-select {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  /* Color/dropdown pickers */
+  .color-grid {
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  /* Mobile pages toggle button */
+  .mobile-pages-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .mobile-pages-toggle:hover {
+    background: var(--primary-dark);
+  }
+}
+
+/* ===== Small Mobile ===== */
+@media (max-width: 400px) {
+  .auth-card {
+    margin: 8px;
+    padding: 24px 16px;
+  }
+
+  .auth-logo h1 {
+    font-size: 24px;
+  }
+
+  .books-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .editor-topbar {
+    padding: 6px 8px;
+  }
+
+  .view-tab {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .toolbar-btn {
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 12px;
+  }
+
+  .page-inner {
+    padding: 16px 12px;
   }
 }
 /* ===== Notes Panel ===== */
@@ -2635,4 +3063,9 @@ body {
 .btn-add-note-empty:hover {
   background: var(--primary-dark);
   box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+/* Mobile pages toggle - hidden on desktop */
+.mobile-pages-toggle {
+  display: none;
 }

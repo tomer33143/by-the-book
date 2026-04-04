@@ -293,3 +293,21 @@ button {
   border-radius: 12px;
   backdrop-filter: blur(4px);
 }
+
+/* Mobile overhaul overrides */
+@media (max-width: 768px) {
+  .editor-topbar {
+    border-radius: 0;
+    max-width: 100%;
+    margin: 0;
+    padding: 8px 12px;
+  }
+
+  .book-card:hover {
+    transform: none;
+  }
+
+  .spread-page::before {
+    display: none;
+  }
+}

@@ -117,6 +117,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [showFontPicker, setShowFontPicker] = useState(false);
   const [showSizePicker, setShowSizePicker] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const isRtl = book.language === 'he';
   const fonts = isRtl ? FONTS_HE : FONTS_EN;
@@ -555,7 +556,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
           {/* Book page area */}
           <div className="editor-body">
             {/* Page navigation sidebar */}
-            <div className={`page-sidebar ${isRtl ? 'sidebar-right' : 'sidebar-left'}`}>
+            <div className={`page-sidebar ${isRtl ? 'sidebar-right' : 'sidebar-left'} ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
               <div className="sidebar-header">
                 <span>עמודים</span>
                 <button className="btn-add-page" onClick={addPage} title="הוסף עמוד">+</button>
@@ -593,6 +594,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
               <div className="page-navigation">
                 <button className="page-nav-btn" onClick={goToPrevSpread} disabled={currentSpreadIdx === 0 && bookView === 'pages'}>
                   {isRtl ? '→' : '←'} {currentSpreadIdx === 0 ? 'כריכה' : 'הקודם'}
+                </button>
+                <button className="page-nav-btn mobile-pages-toggle" onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}>
+                  {mobileSidebarOpen ? '✕' : '☰'} עמודים
                 </button>
                 <span className="page-nav-info">{spreadInfoText}</span>
                 <button className="page-nav-btn" onClick={goToNextSpread} disabled={currentSpreadIdx >= totalSpreads - 1}>
