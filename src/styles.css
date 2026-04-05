@@ -1928,8 +1928,9 @@ body {
 
 /* ===== Page Inner Content ===== */
 .page-inner {
-  position: relative;
-  padding: 48px 44px 50px 44px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 40px 44px 20px 44px;
   height: 700px;
   max-height: 700px;
   direction: rtl;
@@ -1940,14 +1941,26 @@ body {
   direction: ltr;
 }
 
-.page-inner .book-page-editor,
-.page-inner .page-content-preview {
-  height: calc(100% - 60px); /* full height minus header+footer space */
+/* The middle row wrapper - MUST constrain the editor */
+.page-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0; /* critical for grid overflow */
+}
+
+/* EditorContent renders a wrapper div - constrain it too */
+.page-body > div {
+  height: 100%;
+}
+
+.page-body .book-page-editor,
+.page-body .page-content-preview {
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-.page-inner .ProseMirror {
+.page-body .ProseMirror {
   min-height: 100%;
   outline: none;
 }
@@ -1967,12 +1980,8 @@ body {
 }
 
 .page-footer {
-  position: absolute;
-  bottom: 12px;
-  left: 44px;
-  right: 44px;
   text-align: center;
-  padding-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid #eee;
 }
 
@@ -2322,7 +2331,7 @@ body {
   }
 
   .page-inner {
-    padding: 32px 28px 44px 28px;
+    padding: 28px 24px 16px 24px;
     height: 600px;
     max-height: 600px;
   }
@@ -2579,7 +2588,7 @@ body {
   }
 
   .page-inner {
-    padding: 20px 16px 40px 16px;
+    padding: 16px 14px 12px 14px;
     height: 500px;
     max-height: 500px;
   }
@@ -2598,9 +2607,6 @@ body {
   }
 
   .page-footer {
-    bottom: 8px;
-    left: 16px;
-    right: 16px;
     padding-top: 6px;
   }
 
@@ -4324,10 +4330,7 @@ body {
   border-color: rgba(108, 92, 231, 0.15);
 }
 
-/* Footer min-height */
-.page-footer {
-  min-height: 28px;
-}
+/* (footer styled above) */
 
 /* Drag & drop visual feedback */
 .notes-folder-header.drag-over {
@@ -4374,4 +4377,532 @@ body {
     padding: 3px 5px;
     font-size: 12px;
   }
+}
+
+/* ============================================
+   CHAPTERS PANEL - Visual book structure
+   ============================================ */
+.chapters-panel {
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+  direction: rtl;
+}
+
+.chapters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.chapters-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--text);
+}
+
+.chapters-count {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-top: 4px;
+  display: block;
+}
+
+.btn-add-chapter {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+}
+
+.btn-add-chapter:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.35);
+}
+
+/* Empty state */
+.chapters-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.03), rgba(108, 92, 231, 0.08));
+  border-radius: 20px;
+  border: 2px dashed rgba(108, 92, 231, 0.2);
+}
+
+.chapters-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.chapters-empty h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: var(--text);
+}
+
+.chapters-empty p {
+  color: var(--text-light);
+  margin: 0 0 24px;
+}
+
+.btn-add-chapter-big {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.3);
+}
+
+/* Chapter cards grid */
+.chapters-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chapter-card {
+  background: white;
+  border-radius: 14px;
+  border-top: 4px solid var(--primary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 18px 22px;
+  transition: all 0.25s;
+}
+
+.chapter-card:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+.chapter-card.expanded {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.chapter-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.chapter-card-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.chapter-icon-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.chapter-picker {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  z-index: 50;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.chapter-icon-picker {
+  width: 240px;
+}
+
+.chapter-color-picker {
+  width: 200px;
+}
+
+.picker-item {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.picker-item:hover {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.picker-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.picker-color:hover {
+  transform: scale(1.2);
+}
+
+.chapter-card-title-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.chapter-card-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chapter-card-title:hover {
+  color: var(--primary);
+}
+
+.chapter-title-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+}
+
+.chapter-card-meta {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 3px;
+}
+
+.chapter-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.ch-act-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 5px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-light);
+  transition: all 0.15s;
+}
+
+.ch-act-btn:hover {
+  background: rgba(108, 92, 231, 0.08);
+  color: var(--primary);
+  border-color: rgba(108, 92, 231, 0.15);
+}
+
+.ch-act-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.ch-delete:hover {
+  background: rgba(231, 76, 60, 0.08);
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.15);
+}
+
+.ch-color-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Description */
+.chapter-card-desc {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--text-light);
+  line-height: 1.5;
+  cursor: pointer;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.chapter-desc-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.chapter-desc-input:focus {
+  border-color: var(--primary);
+}
+
+/* Pages section */
+.chapter-pages-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.chapter-pages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.btn-assign-pages {
+  padding: 5px 12px;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-assign-pages:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.page-assign-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.page-assign-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border-light);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: start;
+  font-size: 12px;
+}
+
+.page-assign-item:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: rgba(108, 92, 231, 0.04);
+}
+
+.page-assign-item.assigned {
+  border-color: var(--primary);
+  background: rgba(108, 92, 231, 0.08);
+}
+
+.page-assign-item.taken {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-assign-num {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--primary);
+  min-width: 20px;
+}
+
+.page-assign-preview {
+  color: var(--text-light);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chapter-no-pages {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-light);
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.chapter-page-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chapter-page-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.chapter-page-row:hover {
+  background: rgba(108, 92, 231, 0.06);
+}
+
+.chapter-page-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chapter-page-preview {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-light);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chapter-page-words {
+  font-size: 11px;
+  color: var(--text-lighter);
+  white-space: nowrap;
+}
+
+/* Mini page chips (collapsed) */
+.chapter-pages-mini {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.chapter-mini-page {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.chapter-mini-page:hover {
+  transform: scale(1.15);
+}
+
+/* Unassigned section */
+.unassigned-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px dashed rgba(0, 0, 0, 0.08);
+}
+
+.unassigned-section h4 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--text-light);
+}
+
+.unassigned-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unassigned-page {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.unassigned-page:hover {
+  border-color: var(--primary-light);
+  background: rgba(108, 92, 231, 0.05);
+}
+
+.unassigned-num {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unassigned-preview {
+  color: var(--text-light);
+}
+
+/* Dark mode chapters */
+.dark-mode .chapter-card {
+  background: #252542;
+}
+
+.dark-mode .chapter-card-title { color: #e0e0e0; }
+.dark-mode .chapter-title-input { background: #1e1e3a; color: #e0e0e0; }
+.dark-mode .chapter-card-desc { background: rgba(255, 255, 255, 0.04); color: #aaa; }
+.dark-mode .chapter-desc-input { background: #1e1e3a; color: #e0e0e0; border-color: rgba(255, 255, 255, 0.12); }
+.dark-mode .chapter-picker { background: #252542; border-color: rgba(255, 255, 255, 0.1); }
+.dark-mode .page-assign-item { background: #1e1e3a; border-color: rgba(255, 255, 255, 0.1); color: #ccc; }
+.dark-mode .chapter-page-row:hover { background: rgba(108, 92, 231, 0.12); }
+.dark-mode .chapters-empty { background: rgba(108, 92, 231, 0.06); border-color: rgba(108, 92, 231, 0.15); }
+.dark-mode .unassigned-page { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.1); }
+
+@media (max-width: 768px) {
+  .chapters-panel { padding: 16px; }
+  .chapters-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .chapter-card { padding: 14px 16px; }
+  .chapter-card-number { width: 36px; height: 36px; }
+  .page-assign-grid { grid-template-columns: 1fr; }
 }

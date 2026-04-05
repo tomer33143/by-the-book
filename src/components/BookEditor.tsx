@@ -22,6 +22,7 @@ import { exportBookToPdf } from '../utils/pdfExport';
 import FontSizeExtension from './FontSizeExtension';
 import CoverEditor, { BookCoverPreview } from './CoverEditor';
 import NotesPanel from './NotesPanel';
+import ChaptersPanel from './ChaptersPanel';
 import {
   WordCountBar, AutosaveIndicator, ZenModeToggle, WritingGoals,
   SCENE_BREAKS, CHAPTER_TEMPLATES, ShortcutsPanel, CommandPalette,
@@ -157,8 +158,6 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [showGoals, setShowGoals] = useState(false);
   const [bookmarks, setBookmarks] = useState<Set<number>>(() => new Set());
   const [showImageInput, setShowImageInput] = useState(false);
-  const [editingChapter, setEditingChapter] = useState<number | null>(null);
-  const [chapterInput, setChapterInput] = useState('');
   const autoAdvanceRef = useRef(false);
 
   // Close all dropdowns/panels at once - ensures only one is open at a time
@@ -261,10 +260,10 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     if (!editor) return;
     const checkAndAdvance = () => {
       if (autoAdvanceRef.current) return;
-      const editorEl = document.querySelector('.page-active .book-page-editor');
-      if (!editorEl) return;
-      // Check if content overflows the visible area
-      if (editorEl.scrollHeight > editorEl.clientHeight + 5) {
+      const bodyEl = document.querySelector('.page-active .page-body');
+      if (!bodyEl) return;
+      // Check if content overflows the page-body area
+      if (bodyEl.scrollHeight > bodyEl.clientHeight + 5) {
         autoAdvanceRef.current = true;
         saveEditorContent();
         const nextIdx = currentPageIdx + 1;
@@ -560,15 +559,17 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
         <div className="page-header">
           <span className="page-header-title">{page.chapter ? `${page.chapter} — ${book.title}` : book.title}</span>
         </div>
-        {isActive ? (
-          <EditorContent editor={editor} />
-        ) : (
-          <div
-            className="page-content-preview book-page-editor"
-            style={{ direction: isRtl ? 'rtl' : 'ltr', textAlign: isRtl ? 'right' : 'left' }}
-            dangerouslySetInnerHTML={{ __html: page.content || '<p></p>' }}
-          />
-        )}
+        <div className="page-body">
+          {isActive ? (
+            <EditorContent editor={editor} />
+          ) : (
+            <div
+              className="page-content-preview book-page-editor"
+              style={{ direction: isRtl ? 'rtl' : 'ltr', textAlign: isRtl ? 'right' : 'left' }}
+              dangerouslySetInnerHTML={{ __html: page.content || '<p></p>' }}
+            />
+          )}
+        </div>
         <div className="page-footer">
           <span className="page-number">{page.pageNumber}</span>
         </div>
@@ -604,6 +605,12 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             onClick={() => setBookView('pages')}
           >
             עמודים
+          </button>
+          <button
+            className={`view-tab ${bookView === 'chapters' ? 'active' : ''}`}
+            onClick={() => setBookView('chapters')}
+          >
+            פרקים
           </button>
           <button
             className={`view-tab ${bookView === 'notes' ? 'active' : ''}`}
@@ -858,41 +865,6 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                 )}
                 {book.pages.map((page, idx) => (
                   <div key={page.id} className="page-thumb-wrapper">
-                    {/* Chapter label */}
-                    {page.chapter && !pageManageMode && (
-                      <div className="chapter-label" onClick={e => { e.stopPropagation(); setEditingChapter(idx); setChapterInput(page.chapter || ''); }}>
-                        📖 {page.chapter}
-                      </div>
-                    )}
-                    {editingChapter === idx && (
-                      <div className="chapter-edit" onClick={e => e.stopPropagation()}>
-                        <input
-                          value={chapterInput}
-                          onChange={e => setChapterInput(e.target.value)}
-                          placeholder="שם פרק..."
-                          autoFocus
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              setBook(prev => {
-                                const pages = [...prev.pages];
-                                pages[idx] = { ...pages[idx], chapter: chapterInput || undefined };
-                                return { ...prev, pages };
-                              });
-                              setEditingChapter(null);
-                            }
-                            if (e.key === 'Escape') setEditingChapter(null);
-                          }}
-                          onBlur={() => {
-                            setBook(prev => {
-                              const pages = [...prev.pages];
-                              pages[idx] = { ...pages[idx], chapter: chapterInput || undefined };
-                              return { ...prev, pages };
-                            });
-                            setEditingChapter(null);
-                          }}
-                        />
-                      </div>
-                    )}
                     {pageManageMode ? (
                       <div className={`page-thumb manage-mode ${swapSource === idx ? 'swap-source' : ''} ${idx === currentPageIdx ? 'active' : ''}`}>
                         <span className="page-thumb-number">{page.pageNumber}</span>
@@ -919,13 +891,6 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                           title={bookmarks.has(idx) ? 'הסר סימניה' : 'הוסף סימניה'}
                         >
                           {bookmarks.has(idx) ? '★' : '☆'}
-                        </button>
-                        <button
-                          className="btn-chapter-set"
-                          onClick={e => { e.stopPropagation(); setEditingChapter(idx); setChapterInput(page.chapter || ''); }}
-                          title="הגדר פרק"
-                        >
-                          📖
                         </button>
                       </button>
                     )}
@@ -1034,6 +999,16 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
           onGoToPage={(idx) => { switchPage(idx); setShowCommandPalette(false); }}
           onAction={(action) => { handleCommandAction(action); setShowCommandPalette(false); }}
           onClose={() => setShowCommandPalette(false)}
+        />
+      )}
+
+      {/* CHAPTERS VIEW */}
+      {bookView === 'chapters' && (
+        <ChaptersPanel
+          chapters={book.chapters || []}
+          pages={book.pages}
+          onChange={chapters => setBook(prev => ({ ...prev, chapters }))}
+          onGoToPage={idx => { switchPage(idx); setBookView('pages'); }}
         />
       )}
 

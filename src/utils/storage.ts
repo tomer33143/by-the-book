@@ -78,6 +78,7 @@ export async function getBooks(owner: string): Promise<Book[]> {
     language: row.language as 'he' | 'en',
     cover: row.cover as BookCover,
     pages: row.pages as Book['pages'],
+    chapters: (row.cover as any)?._chapters || [],
     noteFolders: row.note_folders as NoteFolder[],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -87,6 +88,9 @@ export async function getBooks(owner: string): Promise<Book[]> {
 function migrateBook(book: Book): Book {
   if (!book.noteFolders) {
     book.noteFolders = [...DEFAULT_NOTE_FOLDERS];
+  }
+  if (!book.chapters) {
+    book.chapters = [];
   }
   return book;
 }
@@ -102,7 +106,7 @@ export async function saveBook(book: Book): Promise<void> {
       title: book.title,
       author: book.author,
       language: book.language,
-      cover: book.cover,
+      cover: { ...book.cover, _chapters: book.chapters || [] },
       pages: book.pages,
       note_folders: book.noteFolders,
       created_at: book.createdAt,
@@ -163,6 +167,7 @@ export function createNewBook(owner: string, title: string, author: string, lang
         pageNumber: 1,
       }
     ],
+    chapters: [],
     noteFolders: DEFAULT_NOTE_FOLDERS.map(f => ({ ...f, notes: [...f.notes] })),
     createdAt: Date.now(),
     updatedAt: Date.now(),
