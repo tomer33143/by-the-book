@@ -255,33 +255,65 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     }
   }, [currentPageIdx, editor]);
 
-  // Auto-advance: when editor content overflows the page, move to next page
+  // Auto-advance: when editor content overflows the page, move last block to next page
   useEffect(() => {
     if (!editor) return;
     const checkAndAdvance = () => {
       if (autoAdvanceRef.current) return;
       const bodyEl = document.querySelector('.page-active .page-body');
       if (!bodyEl) return;
-      // Check if content overflows the page-body area
-      if (bodyEl.scrollHeight > bodyEl.clientHeight + 5) {
-        autoAdvanceRef.current = true;
+      if (bodyEl.scrollHeight <= bodyEl.clientHeight + 2) return;
+
+      autoAdvanceRef.current = true;
+
+      // Get full HTML and split at last block element
+      const fullHtml = editor.getHTML();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(fullHtml, 'text/html');
+      const blocks = Array.from(doc.body.children);
+
+      let overflowHtml = '';
+      if (blocks.length > 1) {
+        // Remove last block from current page, move it to next
+        const lastBlock = blocks[blocks.length - 1];
+        overflowHtml = lastBlock.outerHTML;
+        lastBlock.remove();
+        const remainingHtml = doc.body.innerHTML;
+        editor.commands.setContent(remainingHtml);
         saveEditorContent();
-        const nextIdx = currentPageIdx + 1;
-        if (nextIdx >= book.pages.length) {
-          setBook(prev => {
-            const updated = { ...prev, pages: [...prev.pages] };
-            updated.pages.push({ id: `page_${Date.now()}`, content: '', pageNumber: updated.pages.length + 1 });
-            return updated;
-          });
-        }
-        setTimeout(() => {
-          setCurrentPageIdx(nextIdx);
-          setCurrentSpreadIdx(getSpreadForPage(nextIdx));
-          setTimeout(() => { autoAdvanceRef.current = false; }, 100);
-        }, 50);
+
+        // Check if still overflows after removing one block - if so, keep removing
+        // (handled naturally by the next update event)
+      } else {
+        // Single block that overflows - just save and navigate
+        saveEditorContent();
       }
+
+      const nextIdx = currentPageIdx + 1;
+      setBook(prev => {
+        const updated = { ...prev, pages: [...prev.pages] };
+        if (nextIdx >= updated.pages.length) {
+          updated.pages.push({
+            id: `page_${Date.now()}`,
+            content: overflowHtml,
+            pageNumber: updated.pages.length + 1,
+          });
+        } else if (overflowHtml) {
+          // Prepend overflow content to existing next page
+          updated.pages[nextIdx] = {
+            ...updated.pages[nextIdx],
+            content: overflowHtml + (updated.pages[nextIdx].content || ''),
+          };
+        }
+        return updated;
+      });
+
+      setTimeout(() => {
+        setCurrentPageIdx(nextIdx);
+        setCurrentSpreadIdx(getSpreadForPage(nextIdx));
+        setTimeout(() => { autoAdvanceRef.current = false; }, 200);
+      }, 50);
     };
-    // Check on every keystroke via editor events
     editor.on('update', checkAndAdvance);
     return () => { editor.off('update', checkAndAdvance); };
   }, [editor, currentPageIdx, book.pages.length, saveEditorContent]);

@@ -1943,9 +1943,14 @@ body {
 
 /* The middle row wrapper - MUST constrain the editor */
 .page-body {
+  overflow: hidden;
+  min-height: 0; /* critical for grid overflow */
+}
+
+/* Allow scrolling in preview pages (non-active) for reading */
+.page-preview .page-body {
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 0; /* critical for grid overflow */
 }
 
 /* EditorContent renders a wrapper div - constrain it too */
@@ -1956,8 +1961,7 @@ body {
 .page-body .book-page-editor,
 .page-body .page-content-preview {
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .page-body .ProseMirror {
