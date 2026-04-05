@@ -1943,9 +1943,14 @@ body {
 
 .page-inner .book-page-editor,
 .page-inner .page-content-preview {
-  flex: 1;
+  flex: 1 1 0;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+}
+
+.page-inner .ProseMirror {
+  min-height: 100%;
 }
 
 .page-header {
@@ -1965,7 +1970,7 @@ body {
 
 .page-footer {
   text-align: center;
-  margin-top: 20px;
+  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid #eee;
   flex-shrink: 0;
@@ -4063,4 +4068,277 @@ body {
 .book-page-editor sub {
   vertical-align: sub;
   font-size: 0.75em;
+}
+
+/* ============================================
+   CHAPTER LABELS in sidebar
+   ============================================ */
+.chapter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  padding: 4px 8px;
+  margin-top: 8px;
+  background: rgba(108, 92, 231, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.chapter-label:hover {
+  background: rgba(108, 92, 231, 0.15);
+}
+
+.chapter-edit {
+  margin-top: 4px;
+}
+
+.chapter-edit input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1.5px solid var(--primary);
+  border-radius: 6px;
+  text-align: center;
+  outline: none;
+  background: white;
+}
+
+.btn-chapter-set {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  padding: 2px;
+}
+
+.page-thumb:hover .btn-chapter-set {
+  opacity: 0.6;
+}
+
+.btn-chapter-set:hover {
+  opacity: 1 !important;
+}
+
+.dark-mode .chapter-label {
+  color: var(--primary-light);
+  background: rgba(108, 92, 231, 0.15);
+}
+
+.dark-mode .chapter-edit input {
+  background: #252542;
+  color: #e0e0e0;
+  border-color: var(--primary);
+}
+
+/* ============================================
+   RICH NOTES EDITOR toolbar & styles
+   ============================================ */
+.note-editor-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.note-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-light);
+  background: rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.note-tb {
+  background: none;
+  border: none;
+  padding: 4px 7px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: all 0.15s;
+}
+
+.note-tb:hover {
+  background: rgba(108, 92, 231, 0.1);
+  color: var(--primary-dark);
+}
+
+.note-tb.active {
+  background: rgba(108, 92, 231, 0.15);
+  color: var(--primary);
+}
+
+.note-tb-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-light);
+  margin: 0 4px;
+}
+
+.note-tb-group {
+  position: relative;
+}
+
+.note-tb-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  width: 160px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+}
+
+.note-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.note-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.note-rich-editor {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  outline: none;
+  direction: rtl;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.note-rich-editor p { margin-bottom: 0.5em; }
+.note-rich-editor h2 { font-size: 1.3em; margin: 0.6em 0 0.3em; }
+.note-rich-editor ul, .note-rich-editor ol { padding-right: 20px; }
+.note-rich-editor mark { border-radius: 2px; padding: 0 2px; }
+
+/* Remove old textarea style override */
+.note-content-textarea {
+  display: none;
+}
+
+.dark-mode .note-toolbar {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .note-tb {
+  color: #ccc;
+}
+
+.dark-mode .note-tb-dropdown {
+  background: #252542;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .note-rich-editor {
+  color: #e0e0e0;
+}
+
+/* ============================================
+   TOOLBAR LABEL BUTTON (for Find & Replace)
+   ============================================ */
+.toolbar-btn-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+/* ============================================
+   5 UI IMPROVEMENTS
+   ============================================ */
+
+/* 1. Smoother page sidebar scrollbar */
+.page-list::-webkit-scrollbar {
+  width: 4px;
+}
+.page-list::-webkit-scrollbar-thumb {
+  background: rgba(108, 92, 231, 0.2);
+  border-radius: 2px;
+}
+
+/* 2. Better visual separation between toolbar rows */
+.toolbar-row {
+  padding: 3px 0;
+}
+
+.toolbar-row:first-child {
+  padding-bottom: 5px;
+}
+
+/* 3. Active page thumb glow effect */
+.page-thumb.active {
+  box-shadow: 0 0 0 2px var(--primary), 0 4px 12px rgba(108, 92, 231, 0.2);
+}
+
+/* 4. Better topbar spacing and alignment */
+.editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.editor-topbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 5. Smooth page transitions */
+.page-inner .book-page-editor,
+.page-inner .page-content-preview {
+  scroll-behavior: smooth;
+}
+
+/* Better spread page shadow for depth */
+.spread-page {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.spread-page.page-active {
+  border-color: rgba(108, 92, 231, 0.15);
+}
+
+/* Footer always at bottom - absolute positioning fallback */
+.page-footer {
+  min-height: 30px;
+}
+
+@media (max-width: 768px) {
+  .chapter-label {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .note-toolbar {
+    padding: 4px 6px;
+  }
+
+  .note-tb {
+    padding: 3px 5px;
+    font-size: 12px;
+  }
 }

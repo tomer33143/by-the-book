@@ -1,9 +1,128 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
+import Highlight from '@tiptap/extension-highlight';
 import { NoteFolder, Note } from '../types';
 
 interface NotesPanelProps {
   folders: NoteFolder[];
   onChange: (folders: NoteFolder[]) => void;
+}
+
+const NOTE_COLORS = [
+  '#000000', '#c0392b', '#e67e22', '#f1c40f', '#27ae60',
+  '#2980b9', '#8e44ad', '#1a1a2e', '#555555', '#999999',
+];
+
+const NOTE_HIGHLIGHTS = [
+  '#ffeaa7', '#fab1a0', '#a29bfe', '#74b9ff', '#55efc4',
+  '#fdcb6e', '#e8daef', '#d5f5e3', '#fadbd8', '#dfe6e9',
+];
+
+function NoteEditor({ content, onChange }: { content: string; onChange: (c: string) => void }) {
+  const [showNoteColors, setShowNoteColors] = useState(false);
+  const [showNoteHighlights, setShowNoteHighlights] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextStyle,
+      Color,
+      FontFamily,
+      Highlight.configure({ multicolor: true }),
+    ],
+    content,
+    editorProps: {
+      attributes: { class: 'note-rich-editor', dir: 'rtl' },
+    },
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content]);
+
+  if (!editor) return null;
+
+  return (
+    <div className="note-editor-wrapper">
+      <div className="note-toolbar" onClick={e => e.stopPropagation()}>
+        <button className={`note-tb ${editor.isActive('bold') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleBold().run()}>
+          <strong>B</strong>
+        </button>
+        <button className={`note-tb ${editor.isActive('italic') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleItalic().run()}>
+          <em>I</em>
+        </button>
+        <button className={`note-tb ${editor.isActive('underline') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+          <u>U</u>
+        </button>
+        <button className={`note-tb ${editor.isActive('strike') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleStrike().run()}>
+          <s>S</s>
+        </button>
+
+        <span className="note-tb-divider" />
+
+        <div className="note-tb-group">
+          <button className="note-tb" onClick={() => { setShowNoteColors(!showNoteColors); setShowNoteHighlights(false); }}>
+            <span style={{ borderBottom: `3px solid ${editor.getAttributes('textStyle').color || '#000'}` }}>A</span>
+          </button>
+          {showNoteColors && (
+            <div className="note-tb-dropdown">
+              {NOTE_COLORS.map(c => (
+                <button key={c} className="note-color-swatch" style={{ background: c }}
+                  onClick={() => { editor.chain().focus().setColor(c).run(); setShowNoteColors(false); }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="note-tb-group">
+          <button className={`note-tb ${editor.isActive('highlight') ? 'active' : ''}`}
+            onClick={() => { setShowNoteHighlights(!showNoteHighlights); setShowNoteColors(false); }}>
+            <span style={{ background: '#ffeaa7', padding: '0 3px', borderRadius: '2px', fontSize: '12px' }}>H</span>
+          </button>
+          {showNoteHighlights && (
+            <div className="note-tb-dropdown">
+              {NOTE_HIGHLIGHTS.map(c => (
+                <button key={c} className="note-color-swatch" style={{ background: c }}
+                  onClick={() => { editor.chain().focus().toggleHighlight({ color: c }).run(); setShowNoteHighlights(false); }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <span className="note-tb-divider" />
+
+        <button className={`note-tb ${editor.isActive('heading', { level: 2 }) ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H</button>
+        <button className={`note-tb ${editor.isActive('bulletList') ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}>•≡</button>
+        <button className={`note-tb ${editor.isActive('orderedList') ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}>1.</button>
+
+        <span className="note-tb-divider" />
+
+        <button className={`note-tb ${editor.isActive({ textAlign: 'right' }) ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}>≡▐</button>
+        <button className={`note-tb ${editor.isActive({ textAlign: 'center' }) ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}>≡</button>
+        <button className={`note-tb ${editor.isActive({ textAlign: 'left' }) ? 'active' : ''}`}
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}>▐≡</button>
+      </div>
+      <EditorContent editor={editor} />
+    </div>
+  );
 }
 
 export default function NotesPanel({ folders, onChange }: NotesPanelProps) {
@@ -187,7 +306,7 @@ export default function NotesPanel({ folders, onChange }: NotesPanelProps) {
                       >
                         <span className="note-item-title">{note.title}</span>
                         <span className="note-item-preview">
-                          {note.content.slice(0, 50) || 'ריק'}
+                          {note.content.replace(/<[^>]*>/g, '').slice(0, 50) || 'ריק'}
                         </span>
                       </button>
                     ))
@@ -241,11 +360,9 @@ export default function NotesPanel({ folders, onChange }: NotesPanelProps) {
                 <button className="btn-delete-note" onClick={deleteNote}>🗑️ מחק הערה</button>
               </div>
             </div>
-            <textarea
-              className="note-content-textarea"
-              value={activeNote.content}
-              onChange={e => updateNoteContent(e.target.value)}
-              placeholder="כתוב כאן את ההערות שלך..."
+            <NoteEditor
+              content={activeNote.content}
+              onChange={updateNoteContent}
             />
           </>
         ) : (

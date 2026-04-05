@@ -49,6 +49,7 @@ export interface PageData {
   id: string;
   content: string;
   pageNumber: number;
+  chapter?: string;
 }
 
 export type AppView = 'login' | 'register' | 'dashboard' | 'editor';

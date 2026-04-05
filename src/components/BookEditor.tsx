@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -157,6 +157,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [showGoals, setShowGoals] = useState(false);
   const [bookmarks, setBookmarks] = useState<Set<number>>(() => new Set());
   const [showImageInput, setShowImageInput] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<number | null>(null);
+  const [chapterInput, setChapterInput] = useState('');
+  const autoAdvanceRef = useRef(false);
 
   // Close all dropdowns/panels at once - ensures only one is open at a time
   const closeAllPanels = useCallback(() => {
@@ -252,6 +255,35 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
       }
     }
   }, [currentPageIdx, editor]);
+
+  // Auto-advance: detect overflow and move to next page
+  useEffect(() => {
+    if (!editor || autoAdvanceRef.current) return;
+    const checkOverflow = () => {
+      const editorEl = document.querySelector('.page-active .book-page-editor');
+      if (!editorEl) return;
+      if (editorEl.scrollHeight > editorEl.clientHeight + 10) {
+        autoAdvanceRef.current = true;
+        // Save current, then go to next page (create if needed)
+        const nextIdx = currentPageIdx + 1;
+        if (nextIdx >= book.pages.length) {
+          // Create new page
+          setBook(prev => {
+            const updated = { ...prev, pages: [...prev.pages] };
+            updated.pages.push({ id: `page_${Date.now()}`, content: '', pageNumber: updated.pages.length + 1 });
+            return updated;
+          });
+        }
+        setTimeout(() => {
+          setCurrentPageIdx(nextIdx);
+          setCurrentSpreadIdx(getSpreadForPage(nextIdx));
+          autoAdvanceRef.current = false;
+        }, 50);
+      }
+    };
+    const timer = setTimeout(checkOverflow, 300);
+    return () => clearTimeout(timer);
+  }, [editor, book.pages, currentPageIdx]);
 
   // Activate a page within the current spread (click on a page)
   const activatePage = useCallback((pageIdx: number | null) => {
@@ -524,7 +556,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     return (
       <div className="page-inner">
         <div className="page-header">
-          <span className="page-header-title">{book.title}</span>
+          <span className="page-header-title">{page.chapter ? `${page.chapter} — ${book.title}` : book.title}</span>
         </div>
         {isActive ? (
           <EditorContent editor={editor} />
@@ -773,7 +805,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
               )}
 
               {/* Tools */}
-              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowFindReplace(v => !v); }} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
+              <button className="toolbar-btn toolbar-btn-label" onClick={() => { closeAllPanels(); setShowFindReplace(v => !v); }} title="חפש והחלף (Ctrl+F)">⇄Ab</button>
               <button className="toolbar-btn" onClick={() => editor.chain().focus().unsetAllMarks().run()} title="נקה עיצוב">T̸</button>
               <button className="toolbar-btn" onClick={() => editor.chain().focus().clearNodes().run()} title="נקה בלוקים">¶̸</button>
               <button className="toolbar-btn" onClick={() => setZenMode(true)} title="מצב מיקוד (F11)">🧘</button>
@@ -824,38 +856,51 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                 )}
                 {book.pages.map((page, idx) => (
                   <div key={page.id} className="page-thumb-wrapper">
+                    {/* Chapter label */}
+                    {page.chapter && !pageManageMode && (
+                      <div className="chapter-label" onClick={e => { e.stopPropagation(); setEditingChapter(idx); setChapterInput(page.chapter || ''); }}>
+                        📖 {page.chapter}
+                      </div>
+                    )}
+                    {editingChapter === idx && (
+                      <div className="chapter-edit" onClick={e => e.stopPropagation()}>
+                        <input
+                          value={chapterInput}
+                          onChange={e => setChapterInput(e.target.value)}
+                          placeholder="שם פרק..."
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              setBook(prev => {
+                                const pages = [...prev.pages];
+                                pages[idx] = { ...pages[idx], chapter: chapterInput || undefined };
+                                return { ...prev, pages };
+                              });
+                              setEditingChapter(null);
+                            }
+                            if (e.key === 'Escape') setEditingChapter(null);
+                          }}
+                          onBlur={() => {
+                            setBook(prev => {
+                              const pages = [...prev.pages];
+                              pages[idx] = { ...pages[idx], chapter: chapterInput || undefined };
+                              return { ...prev, pages };
+                            });
+                            setEditingChapter(null);
+                          }}
+                        />
+                      </div>
+                    )}
                     {pageManageMode ? (
                       <div className={`page-thumb manage-mode ${swapSource === idx ? 'swap-source' : ''} ${idx === currentPageIdx ? 'active' : ''}`}>
                         <span className="page-thumb-number">{page.pageNumber}</span>
                         <div className="page-manage-actions">
-                          <button
-                            className="page-manage-btn"
-                            onClick={() => movePage(idx, Math.max(0, idx - 1))}
-                            disabled={idx === 0}
-                            title="הזז למעלה"
-                          >▲</button>
-                          <button
-                            className="page-manage-btn"
-                            onClick={() => movePage(idx, Math.min(book.pages.length - 1, idx + 1))}
-                            disabled={idx === book.pages.length - 1}
-                            title="הזז למטה"
-                          >▼</button>
-                          <button
-                            className={`page-manage-btn swap-btn ${swapSource === idx ? 'active' : ''}`}
-                            onClick={() => {
-                              if (swapSource === null || swapSource === idx) {
-                                setSwapSource(swapSource === idx ? null : idx);
-                              } else {
-                                swapPages(swapSource, idx);
-                              }
-                            }}
-                            title={swapSource !== null && swapSource !== idx ? `החלף עם עמוד ${swapSource + 1}` : 'בחר להחלפה'}
-                          >⇄</button>
-                          <button
-                            className="page-manage-btn insert-btn"
-                            onClick={() => insertPageAfter(idx)}
-                            title="הוסף עמוד אחרי"
-                          >+</button>
+                          <button className="page-manage-btn" onClick={() => movePage(idx, Math.max(0, idx - 1))} disabled={idx === 0} title="הזז למעלה">▲</button>
+                          <button className="page-manage-btn" onClick={() => movePage(idx, Math.min(book.pages.length - 1, idx + 1))} disabled={idx === book.pages.length - 1} title="הזז למטה">▼</button>
+                          <button className={`page-manage-btn swap-btn ${swapSource === idx ? 'active' : ''}`}
+                            onClick={() => { if (swapSource === null || swapSource === idx) { setSwapSource(swapSource === idx ? null : idx); } else { swapPages(swapSource, idx); } }}
+                            title={swapSource !== null && swapSource !== idx ? `החלף עם עמוד ${swapSource + 1}` : 'בחר להחלפה'}>⇄</button>
+                          <button className="page-manage-btn insert-btn" onClick={() => insertPageAfter(idx)} title="הוסף עמוד אחרי">+</button>
                         </div>
                       </div>
                     ) : (
@@ -872,6 +917,13 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                           title={bookmarks.has(idx) ? 'הסר סימניה' : 'הוסף סימניה'}
                         >
                           {bookmarks.has(idx) ? '★' : '☆'}
+                        </button>
+                        <button
+                          className="btn-chapter-set"
+                          onClick={e => { e.stopPropagation(); setEditingChapter(idx); setChapterInput(page.chapter || ''); }}
+                          title="הגדר פרק"
+                        >
+                          📖
                         </button>
                       </button>
                     )}
