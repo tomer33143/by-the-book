@@ -294,6 +294,33 @@ button {
   backdrop-filter: blur(4px);
 }
 
+/* Fix topbar button visibility on glass background */
+.editor-topbar .btn-back {
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--text);
+}
+
+.editor-topbar .btn-back:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.editor-topbar .editor-book-title .book-title-text {
+  color: var(--text);
+}
+
+.editor-topbar .editor-book-title .book-author-text {
+  color: var(--text-light);
+}
+
+.editor-topbar .btn-save {
+  color: white;
+}
+
+.editor-topbar .btn-export {
+  color: white;
+}
+
 /* Mobile overhaul overrides */
 @media (max-width: 768px) {
   .editor-topbar {

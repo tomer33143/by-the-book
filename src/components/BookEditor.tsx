@@ -7,12 +7,22 @@ import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
 import Highlight from '@tiptap/extension-highlight';
+import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
 import { Book, BookView } from '../types';
 import { saveBook } from '../utils/storage';
 import { exportBookToPdf } from '../utils/pdfExport';
 import FontSizeExtension from './FontSizeExtension';
 import CoverEditor, { BookCoverPreview } from './CoverEditor';
 import NotesPanel from './NotesPanel';
+import {
+  WordCountBar, AutosaveIndicator, ZenModeToggle, WritingGoals,
+  SCENE_BREAKS, CHAPTER_TEMPLATES, ShortcutsPanel, CommandPalette,
+  FindReplace,
+} from './WritingTools';
 
 interface BookEditorProps {
   book: Book;
@@ -131,6 +141,18 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [pageManageMode, setPageManageMode] = useState(false);
   const [swapSource, setSwapSource] = useState<number | null>(null);
+  // New feature states
+  const [zenMode, setZenMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('btb_theme') === 'dark');
+  const [lastSaved, setLastSaved] = useState<number | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [showSceneBreaks, setShowSceneBreaks] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showGoals, setShowGoals] = useState(false);
+  const [bookmarks, setBookmarks] = useState<Set<number>>(() => new Set());
+  const [showImageInput, setShowImageInput] = useState(false);
 
   const isRtl = book.language === 'he';
   const fonts = isRtl ? FONTS_HE : FONTS_EN;
@@ -153,6 +175,11 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
       FontFamily,
       FontSizeExtension,
       Highlight.configure({ multicolor: true }),
+      Image.configure({ inline: false, allowBase64: true }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
     ],
     content: currentPage?.content || '',
     editorProps: {
@@ -299,8 +326,55 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     } else {
       await saveBook(book);
     }
+    setLastSaved(Date.now());
     setTimeout(() => setSaving(false), 800);
   }, [book, editor, currentPageIdx]);
+
+  // Dark mode toggle
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+    localStorage.setItem('btb_theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette(v => !v); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f' && bookView === 'pages') { e.preventDefault(); setShowFindReplace(v => !v); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handleSave(); }
+      if (e.key === 'F11') { e.preventDefault(); setZenMode(v => !v); }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [bookView, handleSave]);
+
+  // Compute total book content for word count
+  const totalBookContent = book.pages.map(p => p.content).join(' ');
+  const totalWords = totalBookContent.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length;
+
+  // Toggle bookmark
+  const toggleBookmark = useCallback((idx: number) => {
+    setBookmarks(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  }, []);
+
+  // Command palette action handler
+  const handleCommandAction = useCallback((action: string) => {
+    switch (action) {
+      case 'save': handleSave(); break;
+      case 'export': handleExport(); break;
+      case 'zen': setZenMode(v => !v); break;
+      case 'shortcuts': setShowShortcuts(true); break;
+      case 'cover': setBookView('cover'); break;
+      case 'notes': setBookView('notes'); break;
+      case 'addpage': addPage(); break;
+      case 'goals': setShowGoals(v => !v); break;
+      case 'theme': setDarkMode(v => !v); break;
+    }
+  }, [handleSave, addPage]);
 
   const handleExport = useCallback(async () => {
     handleSave();
@@ -443,8 +517,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   };
 
   return (
-    <div className={`editor-container ${isRtl ? 'rtl' : 'ltr'}`}>
+    <div className={`editor-container ${isRtl ? 'rtl' : 'ltr'} ${zenMode ? 'zen-mode' : ''} ${darkMode ? 'dark-mode' : ''}`}>
       {/* Top bar */}
+      {!zenMode && (
       <div className="editor-topbar">
         <div className="editor-topbar-section">
           <button className="btn-back" onClick={() => { handleSave(); onBack(); }}>
@@ -454,6 +529,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <span className="book-title-text">{book.title}</span>
             <span className="book-author-text">{book.author}</span>
           </div>
+          <AutosaveIndicator saving={saving} lastSaved={lastSaved} />
         </div>
 
         <div className="editor-view-tabs">
@@ -478,6 +554,15 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
         </div>
 
         <div className="editor-topbar-section">
+          <button className="btn-icon-topbar" onClick={() => setDarkMode(v => !v)} title="מצב כהה/בהיר">
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+          <button className="btn-icon-topbar" onClick={() => setShowShortcuts(true)} title="קיצורי מקלדת">
+            ⌨️
+          </button>
+          <button className="btn-icon-topbar" onClick={() => setShowCommandPalette(true)} title="פלטת פקודות (Ctrl+K)">
+            🔍
+          </button>
           <button className="btn-save" onClick={handleSave} disabled={saving}>
             {saving ? '✓ נשמר' : '💾 שמירה'}
           </button>
@@ -486,6 +571,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
           </button>
         </div>
       </div>
+      )}
 
       {/* COVER VIEW */}
       {bookView === 'cover' && (
@@ -648,7 +734,78 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
               <button className="toolbar-btn" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="ביטול">↩</button>
               <button className="toolbar-btn" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="חזרה">↪</button>
             </div>
+
+            <div className="toolbar-divider" />
+
+            {/* New feature buttons */}
+            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+              <button className="toolbar-btn" onClick={() => setShowSceneBreaks(!showSceneBreaks)} title="מפריד סצנות">✦</button>
+              {showSceneBreaks && (
+                <div className="toolbar-dropdown scene-breaks-dropdown">
+                  {SCENE_BREAKS.map(sb => (
+                    <button key={sb.id} className="dropdown-item scene-break-item" onClick={() => {
+                      editor.chain().focus().insertContent(sb.html).run();
+                      setShowSceneBreaks(false);
+                    }}>
+                      <span dangerouslySetInnerHTML={{ __html: sb.html }} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+              <button className="toolbar-btn" onClick={() => setShowTemplates(!showTemplates)} title="תבניות פרקים">📋</button>
+              {showTemplates && (
+                <div className="toolbar-dropdown templates-dropdown">
+                  {CHAPTER_TEMPLATES.map(tpl => (
+                    <button key={tpl.id} className="dropdown-item template-item" onClick={() => {
+                      editor.chain().focus().insertContent(tpl.html).run();
+                      setShowTemplates(false);
+                    }}>
+                      <span>{tpl.icon}</span> <strong>{tpl.name}</strong>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+              <button className="toolbar-btn" onClick={() => setShowImageInput(!showImageInput)} title="הוספת תמונה">🖼️</button>
+              {showImageInput && (
+                <div className="toolbar-dropdown image-input-dropdown">
+                  <label>URL של תמונה:</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const url = (e.target as HTMLInputElement).value;
+                        if (url) { editor.chain().focus().setImage({ src: url }).run(); }
+                        setShowImageInput(false);
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <button className="toolbar-btn" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="הוספת טבלה">⊞</button>
+            <button className="toolbar-btn" onClick={() => setShowFindReplace(v => !v)} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
+            <button className="toolbar-btn" onClick={() => setZenMode(true)} title="מצב מיקוד (F11)">🧘</button>
+            <button className="toolbar-btn" onClick={() => setShowGoals(v => !v)} title="יעדי כתיבה">🎯</button>
           </div>
+
+          {/* Find & Replace bar */}
+          {showFindReplace && (
+            <FindReplace show={true} editor={editor} onClose={() => setShowFindReplace(false)} />
+          )}
+
+          {/* Writing Goals panel */}
+          {showGoals && (
+            <WritingGoals currentWords={totalWords} />
+          )}
 
           {/* Book page area */}
           <div className="editor-body">
@@ -719,11 +876,19 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                       </div>
                     ) : (
                       <button
-                        className={`page-thumb ${idx === currentPageIdx ? 'active' : ''}`}
+                        className={`page-thumb ${idx === currentPageIdx ? 'active' : ''} ${bookmarks.has(idx) ? 'bookmarked' : ''}`}
                         onClick={() => switchPage(idx)}
                       >
                         <span className="page-thumb-number">{page.pageNumber}</span>
+                        {bookmarks.has(idx) && <span className="bookmark-flag">🔖</span>}
                         <div className="page-thumb-preview" dangerouslySetInnerHTML={{ __html: page.content ? page.content.slice(0, 100) : '' }} />
+                        <button
+                          className="btn-bookmark"
+                          onClick={e => { e.stopPropagation(); toggleBookmark(idx); }}
+                          title={bookmarks.has(idx) ? 'הסר סימניה' : 'הוסף סימניה'}
+                        >
+                          {bookmarks.has(idx) ? '★' : '☆'}
+                        </button>
                       </button>
                     )}
                   </div>
@@ -804,9 +969,34 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
                   + הוסף עמוד חדש
                 </button>
               </div>
+
+              {/* Word count bar */}
+              <WordCountBar content={currentPage?.content || ''} totalBookContent={totalBookContent} />
             </div>
           </div>
         </>
+      )}
+
+      {/* Zen mode exit */}
+      {zenMode && (
+        <button className="zen-exit-btn" onClick={() => setZenMode(false)} title="יציאה ממצב מיקוד (F11)">
+          ✕ יציאה ממצב מיקוד
+        </button>
+      )}
+
+      {/* Shortcuts modal */}
+      {showShortcuts && <ShortcutsPanel show={true} onClose={() => setShowShortcuts(false)} />}
+
+      {/* Command palette */}
+      {showCommandPalette && (
+        <CommandPalette
+          show={true}
+          pages={book.pages}
+          bookmarks={bookmarks}
+          onGoToPage={(idx) => { switchPage(idx); setShowCommandPalette(false); }}
+          onAction={(action) => { handleCommandAction(action); setShowCommandPalette(false); }}
+          onClose={() => setShowCommandPalette(false)}
+        />
       )}
 
       {/* NOTES VIEW */}
