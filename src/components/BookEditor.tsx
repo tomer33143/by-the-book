@@ -256,18 +256,19 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
     }
   }, [currentPageIdx, editor]);
 
-  // Auto-advance: detect overflow and move to next page
+  // Auto-advance: when editor content overflows the page, move to next page
   useEffect(() => {
-    if (!editor || autoAdvanceRef.current) return;
-    const checkOverflow = () => {
+    if (!editor) return;
+    const checkAndAdvance = () => {
+      if (autoAdvanceRef.current) return;
       const editorEl = document.querySelector('.page-active .book-page-editor');
       if (!editorEl) return;
-      if (editorEl.scrollHeight > editorEl.clientHeight + 10) {
+      // Check if content overflows the visible area
+      if (editorEl.scrollHeight > editorEl.clientHeight + 5) {
         autoAdvanceRef.current = true;
-        // Save current, then go to next page (create if needed)
+        saveEditorContent();
         const nextIdx = currentPageIdx + 1;
         if (nextIdx >= book.pages.length) {
-          // Create new page
           setBook(prev => {
             const updated = { ...prev, pages: [...prev.pages] };
             updated.pages.push({ id: `page_${Date.now()}`, content: '', pageNumber: updated.pages.length + 1 });
@@ -277,13 +278,14 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
         setTimeout(() => {
           setCurrentPageIdx(nextIdx);
           setCurrentSpreadIdx(getSpreadForPage(nextIdx));
-          autoAdvanceRef.current = false;
+          setTimeout(() => { autoAdvanceRef.current = false; }, 100);
         }, 50);
       }
     };
-    const timer = setTimeout(checkOverflow, 300);
-    return () => clearTimeout(timer);
-  }, [editor, book.pages, currentPageIdx]);
+    // Check on every keystroke via editor events
+    editor.on('update', checkAndAdvance);
+    return () => { editor.off('update', checkAndAdvance); };
+  }, [editor, currentPageIdx, book.pages.length, saveEditorContent]);
 
   // Activate a page within the current spread (click on a page)
   const activatePage = useCallback((pageIdx: number | null) => {

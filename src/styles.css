@@ -1928,11 +1928,10 @@ body {
 
 /* ===== Page Inner Content ===== */
 .page-inner {
-  padding: 48px 44px;
+  position: relative;
+  padding: 48px 44px 50px 44px;
   height: 700px;
   max-height: 700px;
-  display: flex;
-  flex-direction: column;
   direction: rtl;
   overflow: hidden;
 }
@@ -1943,22 +1942,21 @@ body {
 
 .page-inner .book-page-editor,
 .page-inner .page-content-preview {
-  flex: 1 1 0;
+  height: calc(100% - 60px); /* full height minus header+footer space */
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 0;
 }
 
 .page-inner .ProseMirror {
   min-height: 100%;
+  outline: none;
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 20px;
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
-  flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
 .page-header-title {
@@ -1969,11 +1967,13 @@ body {
 }
 
 .page-footer {
+  position: absolute;
+  bottom: 12px;
+  left: 44px;
+  right: 44px;
   text-align: center;
-  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid #eee;
-  flex-shrink: 0;
 }
 
 .page-number {
@@ -2322,7 +2322,7 @@ body {
   }
 
   .page-inner {
-    padding: 32px 28px;
+    padding: 32px 28px 44px 28px;
     height: 600px;
     max-height: 600px;
   }
@@ -2579,7 +2579,7 @@ body {
   }
 
   .page-inner {
-    padding: 20px 16px;
+    padding: 20px 16px 40px 16px;
     height: 500px;
     max-height: 500px;
   }
@@ -2598,8 +2598,10 @@ body {
   }
 
   .page-footer {
-    margin-top: 12px;
-    padding-top: 8px;
+    bottom: 8px;
+    left: 16px;
+    right: 16px;
+    padding-top: 6px;
   }
 
   .page-content-preview {
@@ -4322,9 +4324,40 @@ body {
   border-color: rgba(108, 92, 231, 0.15);
 }
 
-/* Footer always at bottom - absolute positioning fallback */
+/* Footer min-height */
 .page-footer {
-  min-height: 30px;
+  min-height: 28px;
+}
+
+/* Drag & drop visual feedback */
+.notes-folder-header.drag-over {
+  background: rgba(108, 92, 231, 0.15) !important;
+  outline: 2px dashed var(--primary);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+.note-item[draggable="true"] {
+  cursor: grab;
+}
+
+.note-item[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.6;
+}
+
+.notes-folder-header[draggable="true"] {
+  cursor: grab;
+}
+
+.notes-folder-header[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.6;
+}
+
+/* Subfolder button styling */
+.folder-action-btn {
+  font-size: 12px;
 }
 
 @media (max-width: 768px) {

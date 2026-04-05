@@ -30,6 +30,7 @@ export interface NoteFolder {
   name: string;
   icon: string;
   notes: Note[];
+  children?: NoteFolder[];
 }
 
 export interface Book {
