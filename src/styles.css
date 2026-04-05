@@ -1210,7 +1210,7 @@ body {
 /* ===== TipTap Editor Styles ===== */
 .book-page-editor {
   outline: none;
-  min-height: 500px;
+  min-height: unset;
   font-size: 16px;
   line-height: 1.8;
   color: var(--text);
@@ -1300,7 +1300,7 @@ body {
 /* ProseMirror specific */
 .ProseMirror {
   outline: none;
-  min-height: 500px;
+  min-height: unset;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -1930,18 +1930,22 @@ body {
 .page-inner {
   padding: 48px 44px;
   height: 700px;
+  max-height: 700px;
   display: flex;
   flex-direction: column;
   direction: rtl;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .ltr .page-inner {
   direction: ltr;
 }
 
-.page-inner .book-page-editor {
+.page-inner .book-page-editor,
+.page-inner .page-content-preview {
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .page-header {
@@ -2315,10 +2319,11 @@ body {
   .page-inner {
     padding: 32px 28px;
     height: 600px;
+    max-height: 600px;
   }
 
   .ProseMirror {
-    min-height: 350px;
+    min-height: unset;
   }
 
   .page-sidebar {
@@ -2571,10 +2576,11 @@ body {
   .page-inner {
     padding: 20px 16px;
     height: 500px;
+    max-height: 500px;
   }
 
   .ProseMirror {
-    min-height: 300px;
+    min-height: unset;
   }
 
   .page-header {
@@ -3299,113 +3305,134 @@ body {
   color: var(--text-light);
 }
 
-/* Writing Goals */
+/* Writing Goals - compact floating card */
 .writing-goals-panel {
-  background: rgba(255, 255, 255, 0.95);
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 280px;
+  background: rgba(255, 255, 255, 0.97);
   border: 1px solid var(--border-light);
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  position: relative;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  font-size: 13px;
 }
 
-.writing-goals-panel h4 {
-  margin: 0 0 16px;
+.goals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 14px;
   color: var(--text);
-  font-size: 16px;
 }
 
-.goals-close {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+.goals-settings-btn {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
+  color: var(--text-light);
+  padding: 2px 4px;
+}
+
+.goals-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.goals-settings label {
   color: var(--text-light);
 }
 
-.goal-row {
+.goals-settings input[type="number"] {
+  width: 60px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.sprint-presets {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 11px;
+}
+
+.sprint-presets button {
+  padding: 3px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.sprint-presets button:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.goals-progress {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
 }
 
-.goal-row label {
-  font-size: 14px;
-  color: var(--text);
-  min-width: 80px;
-}
-
-.goal-row input[type="number"] {
-  width: 80px;
-  padding: 6px 10px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.goal-progress-bar {
+.goals-bar {
   flex: 1;
-  height: 10px;
+  height: 8px;
   background: var(--bg-light);
-  border-radius: 5px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
-.goal-progress-fill {
+.goals-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--primary), #27ae60);
-  border-radius: 5px;
+  border-radius: 4px;
   transition: width 0.5s ease;
 }
 
-.goal-percent {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--primary);
-  min-width: 40px;
-}
-
-.sprint-section {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-light);
-}
-
-.sprint-section h5 {
-  margin: 0 0 10px;
-  font-size: 14px;
+.goals-text {
+  font-size: 11px;
+  color: var(--text-light);
+  white-space: nowrap;
 }
 
 .sprint-timer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
 }
 
 .sprint-time {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--primary-dark);
 }
 
-.sprint-btn {
-  padding: 6px 16px;
-  border-radius: 8px;
+.sprint-stop {
+  padding: 4px 12px;
+  border-radius: 6px;
   border: none;
-  background: var(--primary);
+  background: #e74c3c;
   color: white;
   cursor: pointer;
-  font-size: 14px;
-}
-
-.sprint-btn:hover {
-  background: var(--primary-dark);
+  font-size: 12px;
 }
 
 /* Scene breaks dropdown */
@@ -3894,4 +3921,146 @@ body {
   .shortcuts-panel {
     padding: 20px;
   }
+
+  .writing-goals-panel {
+    width: 240px;
+    bottom: 12px;
+    left: 12px;
+    padding: 12px;
+  }
+}
+
+/* ============================================
+   IMAGE STYLES - resizable & deletable
+   ============================================ */
+.book-page-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: outline 0.2s;
+  display: block;
+  margin: 8px auto;
+}
+
+.book-page-editor img.ProseMirror-selectednode {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.book-page-editor img:hover {
+  outline: 2px solid rgba(108, 92, 231, 0.4);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   TABLE STYLES - visible and contained
+   ============================================ */
+.book-page-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+.book-page-editor th,
+.book-page-editor td {
+  border: 1.5px solid var(--border);
+  padding: 8px 10px;
+  text-align: start;
+  vertical-align: top;
+  min-width: 60px;
+}
+
+.book-page-editor th {
+  background: var(--bg-light);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.book-page-editor td {
+  background: white;
+}
+
+.book-page-editor .selectedCell {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.book-page-editor .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary);
+  cursor: col-resize;
+}
+
+.book-page-editor .tableWrapper {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.dark-mode .book-page-editor th {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dark-mode .book-page-editor td {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark-mode .book-page-editor th {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================
+   TWO-ROW TOOLBAR LAYOUT
+   ============================================ */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 12px;
+  align-items: center;
+}
+
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.toolbar-row:nth-child(2) {
+  padding-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dark-mode .toolbar-row:nth-child(2) {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Spacing between dropdown groups */
+.toolbar-group + .toolbar-divider,
+.toolbar-divider + .toolbar-group {
+  margin: 0 1px;
+}
+
+.dark-mode .writing-goals-panel {
+  background: rgba(30, 30, 50, 0.97);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Superscript / Subscript */
+.book-page-editor sup {
+  vertical-align: super;
+  font-size: 0.75em;
+}
+
+.book-page-editor sub {
+  vertical-align: sub;
+  font-size: 0.75em;
 }

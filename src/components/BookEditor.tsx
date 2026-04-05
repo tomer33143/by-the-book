@@ -12,6 +12,10 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
+import Placeholder from '@tiptap/extension-placeholder';
+import CharacterCount from '@tiptap/extension-character-count';
 import { Book, BookView } from '../types';
 import { saveBook } from '../utils/storage';
 import { exportBookToPdf } from '../utils/pdfExport';
@@ -195,6 +199,10 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
       TableRow,
       TableCell,
       TableHeader,
+      Subscript,
+      Superscript,
+      Placeholder.configure({ placeholder: isRtl ? 'התחל לכתוב...' : 'Start writing...' }),
+      CharacterCount,
     ],
     content: currentPage?.content || '',
     editorProps: {
@@ -612,207 +620,165 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
       {/* PAGES VIEW */}
       {bookView === 'pages' && (
         <>
-          {/* Toolbar */}
+          {/* Toolbar - Row 1: Text formatting */}
           <div className="editor-toolbar">
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button
-                className="toolbar-dropdown-btn font-picker-btn"
-                onClick={() => { closeAllPanels(); setShowFontPicker(!showFontPicker); }}
-                title="גופן"
-              >
-                <span style={{ fontFamily: currentFontFamily }}>{fonts.find(f => f.name === currentFontFamily)?.label || currentFontFamily}</span>
-                <span className="dropdown-arrow">▾</span>
-              </button>
-              {showFontPicker && (
-                <div className="toolbar-dropdown">
-                  {fonts.map(font => (
-                    <button
-                      key={font.name}
-                      className={`dropdown-item ${currentFontFamily === font.name ? 'active' : ''}`}
-                      style={{ fontFamily: font.name }}
-                      onClick={() => { editor.chain().focus().setFontFamily(font.name).run(); setShowFontPicker(false); }}
-                    >
-                      {font.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <div className="toolbar-row">
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-dropdown-btn font-picker-btn" onClick={() => { closeAllPanels(); setShowFontPicker(!showFontPicker); }} title="גופן">
+                  <span style={{ fontFamily: currentFontFamily }}>{fonts.find(f => f.name === currentFontFamily)?.label || currentFontFamily}</span>
+                  <span className="dropdown-arrow">▾</span>
+                </button>
+                {showFontPicker && (
+                  <div className="toolbar-dropdown">{fonts.map(font => (
+                    <button key={font.name} className={`dropdown-item ${currentFontFamily === font.name ? 'active' : ''}`} style={{ fontFamily: font.name }}
+                      onClick={() => { editor.chain().focus().setFontFamily(font.name).run(); setShowFontPicker(false); }}>{font.label}</button>
+                  ))}</div>
+                )}
+              </div>
 
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button
-                className="toolbar-dropdown-btn size-picker-btn"
-                onClick={() => { closeAllPanels(); setShowSizePicker(!showSizePicker); }}
-                title="גודל גופן"
-              >
-                <span>{parseInt(currentFontSize)}</span>
-                <span className="dropdown-arrow">▾</span>
-              </button>
-              {showSizePicker && (
-                <div className="toolbar-dropdown">
-                  {FONT_SIZES.map(size => (
-                    <button
-                      key={size}
-                      className={`dropdown-item ${parseInt(currentFontSize) === parseInt(size) ? 'active' : ''}`}
-                      onClick={() => { editor.chain().focus().setFontSize(`${size}px`).run(); setShowSizePicker(false); }}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-dropdown-btn size-picker-btn" onClick={() => { closeAllPanels(); setShowSizePicker(!showSizePicker); }} title="גודל גופן">
+                  <span>{parseInt(currentFontSize)}</span><span className="dropdown-arrow">▾</span>
+                </button>
+                {showSizePicker && (
+                  <div className="toolbar-dropdown">{FONT_SIZES.map(size => (
+                    <button key={size} className={`dropdown-item ${parseInt(currentFontSize) === parseInt(size) ? 'active' : ''}`}
+                      onClick={() => { editor.chain().focus().setFontSize(`${size}px`).run(); setShowSizePicker(false); }}>{size}</button>
+                  ))}</div>
+                )}
+              </div>
 
-            <div className="toolbar-divider" />
+              <div className="toolbar-divider" />
 
-            <div className="toolbar-group">
-              <button className={`toolbar-btn ${editor.isActive('bold') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleBold().run()} title="מודגש">
-                <strong>B</strong>
-              </button>
-              <button className={`toolbar-btn ${editor.isActive('italic') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleItalic().run()} title="נטוי">
-                <em>I</em>
-              </button>
-              <button className={`toolbar-btn ${editor.isActive('underline') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleUnderline().run()} title="קו תחתון">
-                <u>U</u>
-              </button>
-              <button className={`toolbar-btn ${editor.isActive('strike') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleStrike().run()} title="קו חוצה">
-                <s>S</s>
-              </button>
-            </div>
+              {/* Text style */}
+              <button className={`toolbar-btn ${editor.isActive('bold') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleBold().run()} title="מודגש (Ctrl+B)"><strong>B</strong></button>
+              <button className={`toolbar-btn ${editor.isActive('italic') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleItalic().run()} title="נטוי (Ctrl+I)"><em>I</em></button>
+              <button className={`toolbar-btn ${editor.isActive('underline') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleUnderline().run()} title="קו תחתון (Ctrl+U)"><u>U</u></button>
+              <button className={`toolbar-btn ${editor.isActive('strike') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleStrike().run()} title="קו חוצה"><s>S</s></button>
+              <button className={`toolbar-btn ${editor.isActive('superscript') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleSuperscript().run()} title="כתב עילי">X²</button>
+              <button className={`toolbar-btn ${editor.isActive('subscript') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleSubscript().run()} title="כתב תחתי">X₂</button>
 
-            <div className="toolbar-divider" />
+              <div className="toolbar-divider" />
 
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button
-                className="toolbar-btn color-btn"
-                onClick={() => { closeAllPanels(); setShowColorPicker(!showColorPicker); }}
-                title="צבע טקסט"
-              >
-                <span style={{ borderBottom: `3px solid ${editor.getAttributes('textStyle').color || '#1a1a2e'}` }}>A</span>
-              </button>
-              {showColorPicker && (
-                <div className="toolbar-dropdown color-grid">
-                  {COLORS.map(color => (
-                    <button key={color} className="color-swatch" style={{ background: color }}
-                      onClick={() => { editor.chain().focus().setColor(color).run(); setShowColorPicker(false); }} />
-                  ))}
-                  <button className="color-swatch color-reset" onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPicker(false); }}>✕</button>
-                </div>
-              )}
-            </div>
+              {/* Color & highlight */}
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-btn color-btn" onClick={() => { closeAllPanels(); setShowColorPicker(!showColorPicker); }} title="צבע טקסט">
+                  <span style={{ borderBottom: `3px solid ${editor.getAttributes('textStyle').color || '#1a1a2e'}` }}>A</span>
+                </button>
+                {showColorPicker && (
+                  <div className="toolbar-dropdown color-grid">
+                    {COLORS.map(color => (<button key={color} className="color-swatch" style={{ background: color }} onClick={() => { editor.chain().focus().setColor(color).run(); setShowColorPicker(false); }} />))}
+                    <button className="color-swatch color-reset" onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPicker(false); }}>✕</button>
+                  </div>
+                )}
+              </div>
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className={`toolbar-btn ${editor.isActive('highlight') ? 'active' : ''}`} onClick={() => { closeAllPanels(); setShowHighlightPicker(!showHighlightPicker); }} title="הדגשת רקע">
+                  <span style={{ background: '#ffeaa7', padding: '0 4px', borderRadius: '2px' }}>H</span>
+                </button>
+                {showHighlightPicker && (
+                  <div className="toolbar-dropdown color-grid">
+                    {HIGHLIGHT_COLORS.map(color => (<button key={color} className="color-swatch" style={{ background: color }} onClick={() => { editor.chain().focus().toggleHighlight({ color }).run(); setShowHighlightPicker(false); }} />))}
+                    <button className="color-swatch color-reset" onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighlightPicker(false); }}>✕</button>
+                  </div>
+                )}
+              </div>
 
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button
-                className={`toolbar-btn ${editor.isActive('highlight') ? 'active' : ''}`}
-                onClick={() => { closeAllPanels(); setShowHighlightPicker(!showHighlightPicker); }}
-                title="הדגשת רקע"
-              >
-                <span style={{ background: '#ffeaa7', padding: '0 4px', borderRadius: '2px' }}>H</span>
-              </button>
-              {showHighlightPicker && (
-                <div className="toolbar-dropdown color-grid">
-                  {HIGHLIGHT_COLORS.map(color => (
-                    <button key={color} className="color-swatch" style={{ background: color }}
-                      onClick={() => { editor.chain().focus().toggleHighlight({ color }).run(); setShowHighlightPicker(false); }} />
-                  ))}
-                  <button className="color-swatch color-reset" onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighlightPicker(false); }}>✕</button>
-                </div>
-              )}
-            </div>
+              <div className="toolbar-divider" />
 
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group">
+              {/* Headings */}
               <button className={`toolbar-btn ${editor.isActive('heading', { level: 1 }) ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} title="כותרת 1">H1</button>
               <button className={`toolbar-btn ${editor.isActive('heading', { level: 2 }) ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="כותרת 2">H2</button>
               <button className={`toolbar-btn ${editor.isActive('heading', { level: 3 }) ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} title="כותרת 3">H3</button>
+
+              <div className="toolbar-divider" />
+
+              {/* Undo / Redo */}
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="ביטול (Ctrl+Z)">↩</button>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="חזרה (Ctrl+Y)">↪</button>
             </div>
 
-            <div className="toolbar-divider" />
-
-            <div className="toolbar-group">
+            {/* Row 2: Paragraph, insert, tools */}
+            <div className="toolbar-row">
+              {/* Alignment */}
               <button className={`toolbar-btn ${editor.isActive({ textAlign: 'right' }) ? 'active' : ''}`} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="ימין">≡▐</button>
               <button className={`toolbar-btn ${editor.isActive({ textAlign: 'center' }) ? 'active' : ''}`} onClick={() => editor.chain().focus().setTextAlign('center').run()} title="מרכז">≡</button>
               <button className={`toolbar-btn ${editor.isActive({ textAlign: 'left' }) ? 'active' : ''}`} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="שמאל">▐≡</button>
               <button className={`toolbar-btn ${editor.isActive({ textAlign: 'justify' }) ? 'active' : ''}`} onClick={() => editor.chain().focus().setTextAlign('justify').run()} title="מלא">☰</button>
-            </div>
 
-            <div className="toolbar-divider" />
+              <div className="toolbar-divider" />
 
-            <div className="toolbar-group">
+              {/* Lists & structure */}
               <button className={`toolbar-btn ${editor.isActive('bulletList') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleBulletList().run()} title="רשימה">•≡</button>
               <button className={`toolbar-btn ${editor.isActive('orderedList') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="ממוספר">1.</button>
               <button className={`toolbar-btn ${editor.isActive('blockquote') ? 'active' : ''}`} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="ציטוט">❝</button>
               <button className="toolbar-btn" onClick={() => editor.chain().focus().setHorizontalRule().run()} title="קו מפריד">─</button>
-            </div>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().toggleCodeBlock().run()} title="בלוק קוד">{'</>'}</button>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().toggleCode().run()} title="קוד בשורה">{'{}'}</button>
 
-            <div className="toolbar-divider" />
+              <div className="toolbar-divider" />
 
-            <div className="toolbar-group">
-              <button className="toolbar-btn" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="ביטול">↩</button>
-              <button className="toolbar-btn" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="חזרה">↪</button>
-            </div>
+              {/* Indent */}
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().sinkListItem('listItem').run()} title="הגדל כניסה">→⫿</button>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().liftListItem('listItem').run()} title="הקטן כניסה">⫿←</button>
 
-            <div className="toolbar-divider" />
+              <div className="toolbar-divider" />
 
-            {/* New feature buttons */}
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowSceneBreaks(!showSceneBreaks); }} title="מפריד סצנות">✦</button>
-              {showSceneBreaks && (
-                <div className="toolbar-dropdown scene-breaks-dropdown">
-                  {SCENE_BREAKS.map(sb => (
-                    <button key={sb.id} className="dropdown-item scene-break-item" onClick={() => {
-                      editor.chain().focus().insertContent(sb.html).run();
-                      setShowSceneBreaks(false);
-                    }}>
+              {/* Insert - scene breaks, templates, image, table */}
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowSceneBreaks(!showSceneBreaks); }} title="מפריד סצנות">✦</button>
+                {showSceneBreaks && (
+                  <div className="toolbar-dropdown scene-breaks-dropdown">{SCENE_BREAKS.map(sb => (
+                    <button key={sb.id} className="dropdown-item scene-break-item" onClick={() => { editor.chain().focus().insertContent(sb.html).run(); setShowSceneBreaks(false); }}>
                       <span dangerouslySetInnerHTML={{ __html: sb.html }} />
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowTemplates(!showTemplates); }} title="תבניות פרקים">📋</button>
-              {showTemplates && (
-                <div className="toolbar-dropdown templates-dropdown">
-                  {CHAPTER_TEMPLATES.map(tpl => (
-                    <button key={tpl.id} className="dropdown-item template-item" onClick={() => {
-                      editor.chain().focus().insertContent(tpl.html).run();
-                      setShowTemplates(false);
-                    }}>
+                  ))}</div>
+                )}
+              </div>
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowTemplates(!showTemplates); }} title="תבניות פרקים">📋</button>
+                {showTemplates && (
+                  <div className="toolbar-dropdown templates-dropdown">{CHAPTER_TEMPLATES.map(tpl => (
+                    <button key={tpl.id} className="dropdown-item template-item" onClick={() => { editor.chain().focus().insertContent(tpl.html).run(); setShowTemplates(false); }}>
                       <span>{tpl.icon}</span> <strong>{tpl.name}</strong>
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  ))}</div>
+                )}
+              </div>
+              <div className="toolbar-group" onClick={e => e.stopPropagation()}>
+                <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowImageInput(!showImageInput); }} title="הוספת תמונה">🖼️</button>
+                {showImageInput && (
+                  <div className="toolbar-dropdown image-input-dropdown">
+                    <label>URL של תמונה:</label>
+                    <input type="url" placeholder="https://..." autoFocus onKeyDown={e => {
+                      if (e.key === 'Enter') { const url = (e.target as HTMLInputElement).value; if (url) { editor.chain().focus().setImage({ src: url }).run(); } setShowImageInput(false); }
+                    }} />
+                  </div>
+                )}
+              </div>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="הוספת טבלה">⊞</button>
 
-            <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowImageInput(!showImageInput); }} title="הוספת תמונה">🖼️</button>
-              {showImageInput && (
-                <div className="toolbar-dropdown image-input-dropdown">
-                  <label>URL של תמונה:</label>
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    autoFocus
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        const url = (e.target as HTMLInputElement).value;
-                        if (url) { editor.chain().focus().setImage({ src: url }).run(); }
-                        setShowImageInput(false);
-                      }
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+              <div className="toolbar-divider" />
 
-            <button className="toolbar-btn" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="הוספת טבלה">⊞</button>
-            <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowFindReplace(v => !v); }} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
-            <button className="toolbar-btn" onClick={() => setZenMode(true)} title="מצב מיקוד (F11)">🧘</button>
-            <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowGoals(v => !v); }} title="יעדי כתיבה">🎯</button>
+              {/* Table actions (when inside table) */}
+              {editor.isActive('table') && (
+                <>
+                  <button className="toolbar-btn" onClick={() => editor.chain().focus().addColumnAfter().run()} title="הוסף עמודה">+▐</button>
+                  <button className="toolbar-btn" onClick={() => editor.chain().focus().deleteColumn().run()} title="מחק עמודה">-▐</button>
+                  <button className="toolbar-btn" onClick={() => editor.chain().focus().addRowAfter().run()} title="הוסף שורה">+▬</button>
+                  <button className="toolbar-btn" onClick={() => editor.chain().focus().deleteRow().run()} title="מחק שורה">-▬</button>
+                  <button className="toolbar-btn" onClick={() => editor.chain().focus().deleteTable().run()} title="מחק טבלה">✕⊞</button>
+                  <div className="toolbar-divider" />
+                </>
+              )}
+
+              {/* Tools */}
+              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowFindReplace(v => !v); }} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().unsetAllMarks().run()} title="נקה עיצוב">T̸</button>
+              <button className="toolbar-btn" onClick={() => editor.chain().focus().clearNodes().run()} title="נקה בלוקים">¶̸</button>
+              <button className="toolbar-btn" onClick={() => setZenMode(true)} title="מצב מיקוד (F11)">🧘</button>
+              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowGoals(v => !v); }} title="יעדי כתיבה">🎯</button>
+            </div>
           </div>
 
           {/* Find & Replace bar */}
