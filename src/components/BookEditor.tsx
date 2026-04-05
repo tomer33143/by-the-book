@@ -154,6 +154,21 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
   const [bookmarks, setBookmarks] = useState<Set<number>>(() => new Set());
   const [showImageInput, setShowImageInput] = useState(false);
 
+  // Close all dropdowns/panels at once - ensures only one is open at a time
+  const closeAllPanels = useCallback(() => {
+    setShowColorPicker(false);
+    setShowHighlightPicker(false);
+    setShowFontPicker(false);
+    setShowSizePicker(false);
+    setShowSceneBreaks(false);
+    setShowTemplates(false);
+    setShowImageInput(false);
+    setShowFindReplace(false);
+    setShowGoals(false);
+    setShowShortcuts(false);
+    setShowCommandPalette(false);
+  }, []);
+
   const isRtl = book.language === 'he';
   const fonts = isRtl ? FONTS_HE : FONTS_EN;
   const currentPage = book.pages[currentPageIdx];
@@ -399,6 +414,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
       setShowHighlightPicker(false);
       setShowFontPicker(false);
       setShowSizePicker(false);
+      setShowSceneBreaks(false);
+      setShowTemplates(false);
+      setShowImageInput(false);
     }
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
@@ -557,10 +575,10 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
           <button className="btn-icon-topbar" onClick={() => setDarkMode(v => !v)} title="מצב כהה/בהיר">
             {darkMode ? '☀️' : '🌙'}
           </button>
-          <button className="btn-icon-topbar" onClick={() => setShowShortcuts(true)} title="קיצורי מקלדת">
+          <button className="btn-icon-topbar" onClick={() => { closeAllPanels(); setShowShortcuts(true); }} title="קיצורי מקלדת">
             ⌨️
           </button>
-          <button className="btn-icon-topbar" onClick={() => setShowCommandPalette(true)} title="פלטת פקודות (Ctrl+K)">
+          <button className="btn-icon-topbar" onClick={() => { closeAllPanels(); setShowCommandPalette(true); }} title="פלטת פקודות (Ctrl+K)">
             🔍
           </button>
           <button className="btn-save" onClick={handleSave} disabled={saving}>
@@ -599,7 +617,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
               <button
                 className="toolbar-dropdown-btn font-picker-btn"
-                onClick={() => { setShowFontPicker(!showFontPicker); setShowSizePicker(false); setShowColorPicker(false); setShowHighlightPicker(false); }}
+                onClick={() => { closeAllPanels(); setShowFontPicker(!showFontPicker); }}
                 title="גופן"
               >
                 <span style={{ fontFamily: currentFontFamily }}>{fonts.find(f => f.name === currentFontFamily)?.label || currentFontFamily}</span>
@@ -624,7 +642,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
               <button
                 className="toolbar-dropdown-btn size-picker-btn"
-                onClick={() => { setShowSizePicker(!showSizePicker); setShowFontPicker(false); setShowColorPicker(false); setShowHighlightPicker(false); }}
+                onClick={() => { closeAllPanels(); setShowSizePicker(!showSizePicker); }}
                 title="גודל גופן"
               >
                 <span>{parseInt(currentFontSize)}</span>
@@ -667,7 +685,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
               <button
                 className="toolbar-btn color-btn"
-                onClick={() => { setShowColorPicker(!showColorPicker); setShowHighlightPicker(false); setShowFontPicker(false); setShowSizePicker(false); }}
+                onClick={() => { closeAllPanels(); setShowColorPicker(!showColorPicker); }}
                 title="צבע טקסט"
               >
                 <span style={{ borderBottom: `3px solid ${editor.getAttributes('textStyle').color || '#1a1a2e'}` }}>A</span>
@@ -686,7 +704,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
               <button
                 className={`toolbar-btn ${editor.isActive('highlight') ? 'active' : ''}`}
-                onClick={() => { setShowHighlightPicker(!showHighlightPicker); setShowColorPicker(false); setShowFontPicker(false); setShowSizePicker(false); }}
+                onClick={() => { closeAllPanels(); setShowHighlightPicker(!showHighlightPicker); }}
                 title="הדגשת רקע"
               >
                 <span style={{ background: '#ffeaa7', padding: '0 4px', borderRadius: '2px' }}>H</span>
@@ -739,7 +757,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
 
             {/* New feature buttons */}
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => setShowSceneBreaks(!showSceneBreaks)} title="מפריד סצנות">✦</button>
+              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowSceneBreaks(!showSceneBreaks); }} title="מפריד סצנות">✦</button>
               {showSceneBreaks && (
                 <div className="toolbar-dropdown scene-breaks-dropdown">
                   {SCENE_BREAKS.map(sb => (
@@ -755,7 +773,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             </div>
 
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => setShowTemplates(!showTemplates)} title="תבניות פרקים">📋</button>
+              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowTemplates(!showTemplates); }} title="תבניות פרקים">📋</button>
               {showTemplates && (
                 <div className="toolbar-dropdown templates-dropdown">
                   {CHAPTER_TEMPLATES.map(tpl => (
@@ -771,7 +789,7 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             </div>
 
             <div className="toolbar-group" onClick={e => e.stopPropagation()}>
-              <button className="toolbar-btn" onClick={() => setShowImageInput(!showImageInput)} title="הוספת תמונה">🖼️</button>
+              <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowImageInput(!showImageInput); }} title="הוספת תמונה">🖼️</button>
               {showImageInput && (
                 <div className="toolbar-dropdown image-input-dropdown">
                   <label>URL של תמונה:</label>
@@ -792,9 +810,9 @@ export default function BookEditor({ book: initialBook, onBack }: BookEditorProp
             </div>
 
             <button className="toolbar-btn" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="הוספת טבלה">⊞</button>
-            <button className="toolbar-btn" onClick={() => setShowFindReplace(v => !v)} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
+            <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowFindReplace(v => !v); }} title="חיפוש והחלפה (Ctrl+F)">🔎</button>
             <button className="toolbar-btn" onClick={() => setZenMode(true)} title="מצב מיקוד (F11)">🧘</button>
-            <button className="toolbar-btn" onClick={() => setShowGoals(v => !v)} title="יעדי כתיבה">🎯</button>
+            <button className="toolbar-btn" onClick={() => { closeAllPanels(); setShowGoals(v => !v); }} title="יעדי כתיבה">🎯</button>
           </div>
 
           {/* Find & Replace bar */}
